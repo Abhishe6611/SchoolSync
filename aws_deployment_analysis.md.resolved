@@ -1,0 +1,38 @@
+# AWS Deployment Analysis Report
+
+If you decide to deploy this School Management System to Amazon Web Services (AWS) in its current state, you will run into several architectural bottlenecks and critical failures. 
+
+Here is a detailed breakdown of the exact errors and faults you will face, along with the necessary fixes required before migrating to the cloud.
+
+## 🚨 1. Ephemeral Storage Data Loss (Critical)
+**The Fault:** Currently, all student and staff profile photos are being saved directly to the local disk inside the `backend/uploads/` directory.
+**Why it fails on AWS:** Cloud compute instances (like EC2, ECS Containers, or Elastic Beanstalk) are **ephemeral**. This means if AWS auto-scales your servers to handle traffic, or if a server reboots, the entire local filesystem resets. **Every single profile photo uploaded by users will be permanently deleted.**
+**The Fix:** You must integrate the AWS `boto3` SDK into your FastAPI backend and rewrite the upload routes (in `students.py` and `staff.py`) to stream files directly into an **Amazon S3 Bucket**. The database should store the S3 URL, not a local file path.
+
+## 🚨 2. CORS (Cross-Origin Resource Sharing) Blocks
+**The Fault:** In `backend/app/core/config.py`, the `CORS_ORIGINS` is currently hardcoded to default to `["http://localhost:5173", "http://localhost:3000"]`.
+**Why it fails on AWS:** When you host your frontend on a domain (e.g., `https://school.yourdomain.com`), the browser will attempt to contact the AWS backend. Because the domain does not match `localhost`, the browser will immediately block all API requests with a **CORS Network Error**.
+**The Fix:** You must pass the exact production frontend URL into the backend environment variables via `.env` or AWS Parameter Store so the FastAPI CORS middleware allows the traffic.
+
+## ⚠️ 3. Frontend Build Hardcoding (Vite)
+**The Fault:** The frontend relies on `VITE_API_BASE_URL` in `src/api/axios.js`. 
+**Why it fails on AWS:** Unlike the backend, React/Vite frontends are static HTML/JS files once built. They cannot read server environment variables at runtime. If you build the frontend on your local machine and upload it to an AWS S3 Bucket or Amplify without setting the production API URL, the live site will try to send requests to `localhost:8000` and fail.
+**The Fix:** You must inject the AWS Application Load Balancer (ALB) or API Gateway URL during the CI/CD build step (e.g., `VITE_API_BASE_URL=https://api.yourdomain.com npm run build`).
+
+## ⚠️ 4. Security: Infinite JWT Expirations
+**The Fault:** In `app/core/config.py`, the `ACCESS_TOKEN_EXPIRE_MINUTES` is currently set to **10 years** (`5256000` minutes).
+**Why it fails on AWS:** While perfectly fine for local rapid prototyping, deploying a live ERP system with sensitive demographic, financial, and student data using non-expiring tokens is a massive security vulnerability. If a staff member's token is intercepted, the attacker has permanent access.
+**The Fix:** Reduce the token expiration to a standard window (e.g., 60-120 minutes) and ensure your frontend handles token refresh gracefully or forces re-login.
+
+## ⚠️ 5. MongoDB vs AWS DocumentDB Complexities
+**The Fault:** The system relies on a standard MongoDB connection string via Beanie ODM.
+**Why it fails on AWS:** If you plan to use **AWS DocumentDB** instead of MongoDB Atlas, you will face connection errors. DocumentDB requires specific TLS/SSL certificates (`rds-combined-ca-bundle.pem`) to be downloaded and attached to the MotorAsyncIO connection string.
+**The Fix:** Stick to **MongoDB Atlas** (hosted on AWS) for the easiest migration path, or update your `init_db()` function in `database/session.py` to handle AWS DocumentDB TLS certs.
+
+---
+
+### Summary of Required Action Plan Before AWS Launch:
+1. **Create an S3 Bucket** and rewrite photo endpoints using `boto3`.
+2. **Remove the static file mount** (`app.mount("/uploads", ...)`).
+3. **Lock down Security:** Fix the JWT expiration times.
+4. **Configure CI/CD:** Ensure `CORS_ORIGINS` and `VITE_API_BASE_URL` are strictly defined via environment variables during the deployment pipelines.
