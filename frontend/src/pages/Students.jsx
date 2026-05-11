@@ -490,6 +490,30 @@ export default function Students() {
                 <div className="mt-5 flex flex-wrap gap-2 w-full px-4">
                   <button onClick={handleEditFromProfile} className="btn-primary text-xs flex-1 py-2">Edit Profile</button>
                   <button onClick={() => setShowHallTicket(selectedStudent)} className="btn-secondary text-xs text-emerald-600 border-emerald-200 hover:bg-emerald-50 flex-1 py-2">Hall Ticket</button>
+                  <button onClick={() => {
+                    const letterHtml = letterRef.current?.innerHTML || "";
+                    const iframe = document.createElement('iframe');
+                    iframe.style.position = 'absolute';
+                    iframe.style.width = '0px';
+                    iframe.style.height = '0px';
+                    iframe.style.border = 'none';
+                    document.body.appendChild(iframe);
+                    
+                    const doc = iframe.contentWindow.document;
+                    doc.open();
+                    doc.write(`<!DOCTYPE html><html><head><title>Admission Letter – ${selectedStudent.first_name} ${selectedStudent.last_name}</title><style>@page{size:A4;margin:0}*{box-sizing:border-box;margin:0;padding:0}body{margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}</style></head><body>${letterHtml}</body></html>`);
+                    doc.close();
+                    
+                    setTimeout(() => { 
+                      iframe.contentWindow.focus(); 
+                      iframe.contentWindow.print(); 
+                      setTimeout(() => {
+                        if (document.body.contains(iframe)) document.body.removeChild(iframe);
+                      }, 1000);
+                    }, 400);
+                  }} className="btn-secondary text-xs text-indigo-600 border-indigo-200 hover:bg-indigo-50 flex-1 py-2" title="Print Admission Letter">
+                    Print Admission
+                  </button>
                   <button onClick={handleDeleteFromProfile} className="btn-secondary text-xs text-red-600 border-red-200 hover:bg-red-50 flex-1 py-2">Delete</button>
                 </div>
                 <button onClick={() => { setActiveTab("directory"); resetForm(); setSelectedStudent(null); }} className="mt-3 text-xs text-[#868e96] hover:text-[#495057] transition-colors">← Back to Directory</button>
@@ -820,12 +844,20 @@ export default function Students() {
             </div>
           </div>
 
-          {/* Hidden letter for printing */}
-          <div style={{ position: "fixed", left: "-9999px", top: 0 }}>
-            <AdmissionLetter ref={letterRef} student={admissionSuccess} className={classMap[admissionSuccess.class_id] || "—"} school={schoolSettings} />
-          </div>
         </div>
       )}
+      
+      {/* Hidden letter for printing (Global) */}
+      <div style={{ position: "fixed", left: "-9999px", top: 0 }}>
+        {(admissionSuccess || selectedStudent) && (
+          <AdmissionLetter 
+            ref={letterRef} 
+            student={admissionSuccess || selectedStudent} 
+            className={classMap[(admissionSuccess || selectedStudent).class_id] || "—"} 
+            school={schoolSettings} 
+          />
+        )}
+      </div>
       {/* Hall Ticket Generation Modal */}
       {showHallTicket && (
         <HallTicketModal 
