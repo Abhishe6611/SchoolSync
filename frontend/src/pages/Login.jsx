@@ -18,6 +18,7 @@ export default function Login() {
       const payload = new URLSearchParams();
       payload.append("username", username);
       payload.append("password", password);
+      payload.append("client_id", loginMode);
       const response = await api.post("/auth/login", payload, {
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
       });
