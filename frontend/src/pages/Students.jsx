@@ -781,12 +781,28 @@ export default function Students() {
             <div className="px-8 pb-6 flex items-center gap-3">
               <button
                 onClick={() => {
-                  // Open a print window with the admission letter
-                  const printWin = window.open("", "_blank", "width=900,height=1100");
                   const letterHtml = letterRef.current?.innerHTML || "";
-                  printWin.document.write(`<!DOCTYPE html><html><head><title>Admission Letter – ${admissionSuccess.first_name} ${admissionSuccess.last_name}</title><style>@page{size:A4;margin:0}*{box-sizing:border-box;margin:0;padding:0}body{margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}</style></head><body>${letterHtml}</body></html>`);
-                  printWin.document.close();
-                  setTimeout(() => { printWin.focus(); printWin.print(); }, 400);
+                  const iframe = document.createElement('iframe');
+                  iframe.style.position = 'absolute';
+                  iframe.style.width = '0px';
+                  iframe.style.height = '0px';
+                  iframe.style.border = 'none';
+                  document.body.appendChild(iframe);
+                  
+                  const doc = iframe.contentWindow.document;
+                  doc.open();
+                  doc.write(`<!DOCTYPE html><html><head><title>Admission Letter – ${admissionSuccess.first_name} ${admissionSuccess.last_name}</title><style>@page{size:A4;margin:0}*{box-sizing:border-box;margin:0;padding:0}body{margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}</style></head><body>${letterHtml}</body></html>`);
+                  doc.close();
+                  
+                  setTimeout(() => { 
+                    iframe.contentWindow.focus(); 
+                    iframe.contentWindow.print(); 
+                    setTimeout(() => {
+                      if (document.body.contains(iframe)) {
+                        document.body.removeChild(iframe);
+                      }
+                    }, 1000);
+                  }, 400);
                 }}
                 className="btn-primary flex-1 flex items-center justify-center gap-2 py-2.5"
               >
