@@ -14,6 +14,7 @@ export default function Subjects() {
   const [editingId, setEditingId] = useState(null);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const pageSize = 10;
 
   const fetchData = async () => {
@@ -28,7 +29,29 @@ export default function Subjects() {
   }, [subjects, search]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
+
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') direction = 'desc';
+    setSortConfig({ key, direction });
+  };
+
+  const sortedAndFiltered = useMemo(() => {
+    if (!sortConfig.key) return filtered;
+    return [...filtered].sort((a, b) => {
+      let aVal = a[sortConfig.key];
+      let bVal = b[sortConfig.key];
+      if (typeof aVal === 'string') { aVal = aVal.toLowerCase(); bVal = (bVal || "").toLowerCase(); }
+      if (aVal === null || aVal === undefined) aVal = "";
+      if (bVal === null || bVal === undefined) bVal = "";
+      if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [filtered, sortConfig]);
+
+  useEffect(() => { setPage(1); }, [search, sortConfig]);
+  const paged = sortedAndFiltered.slice((page - 1) * pageSize, page * pageSize);
   const resetForm = () => { setForm(emptyForm); setEditingId(null); };
 
   const handleSubmit = async (e) => {
@@ -100,7 +123,7 @@ export default function Subjects() {
               />
             </div>
           </div>
-          <Table columns={columns} data={paged} />
+          <Table columns={columns} data={paged} onSort={handleSort} sortConfig={sortConfig} />
           <Pagination page={page} totalPages={totalPages} onPageChange={setPage} totalRecords={filtered.length} pageSize={pageSize} />
         </div>
       </div>

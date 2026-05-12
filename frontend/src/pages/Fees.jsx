@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+
 import api from "../api/axios";
 import Pagination from "../components/Pagination.jsx";
 import Table from "../components/Table.jsx";
@@ -42,6 +43,8 @@ export default function Fees() {
   const [filterStatus, setFilterStatus] = useState("");
   const [page, setPage] = useState(1);
   const [histPage, setHistPage] = useState(1);
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+  const [histSortConfig, setHistSortConfig] = useState({ key: null, direction: 'asc' });
   const pageSize = 10;
 
   // ── Data Fetching ─────────────────────────────────────
@@ -83,13 +86,53 @@ export default function Fees() {
     });
   }, [overview, search, filterClass, filterStatus]);
 
-  useEffect(() => { setPage(1); }, [search, filterClass, filterStatus]);
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') direction = 'desc';
+    setSortConfig({ key, direction });
+  };
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
+  const handleHistSort = (key) => {
+    let direction = 'asc';
+    if (histSortConfig.key === key && histSortConfig.direction === 'asc') direction = 'desc';
+    setHistSortConfig({ key, direction });
+  };
 
-  const histTotalPages = Math.max(1, Math.ceil(payments.length / pageSize));
-  const histPaged = payments.slice((histPage - 1) * pageSize, histPage * pageSize);
+  const sortedFiltered = useMemo(() => {
+    if (!sortConfig.key) return filtered;
+    return [...filtered].sort((a, b) => {
+      let aVal = a[sortConfig.key];
+      let bVal = b[sortConfig.key];
+      if (typeof aVal === 'string') { aVal = aVal.toLowerCase(); bVal = (bVal || "").toLowerCase(); }
+      if (aVal === null || aVal === undefined) aVal = "";
+      if (bVal === null || bVal === undefined) bVal = "";
+      if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [filtered, sortConfig]);
+
+  const sortedPayments = useMemo(() => {
+    if (!histSortConfig.key) return payments;
+    return [...payments].sort((a, b) => {
+      let aVal = a[histSortConfig.key];
+      let bVal = b[histSortConfig.key];
+      if (typeof aVal === 'string') { aVal = aVal.toLowerCase(); bVal = (bVal || "").toLowerCase(); }
+      if (aVal === null || aVal === undefined) aVal = "";
+      if (bVal === null || bVal === undefined) bVal = "";
+      if (aVal < bVal) return histSortConfig.direction === 'asc' ? -1 : 1;
+      if (aVal > bVal) return histSortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [payments, histSortConfig]);
+
+  useEffect(() => { setPage(1); }, [search, filterClass, filterStatus, sortConfig]);
+
+  const totalPages = Math.max(1, Math.ceil(sortedFiltered.length / pageSize));
+  const paged = sortedFiltered.slice((page - 1) * pageSize, page * pageSize);
+
+  const histTotalPages = Math.max(1, Math.ceil(sortedPayments.length / pageSize));
+  const histPaged = sortedPayments.slice((histPage - 1) * pageSize, histPage * pageSize);
 
   // ── Overview Summaries ────────────────────────────────
   const summaryStats = useMemo(() => {
@@ -394,7 +437,7 @@ export default function Fees() {
 
           {/* Table */}
           <div className="animate-slide-up" style={{ animationDelay: "240ms", opacity: 0, animationFillMode: "forwards" }}>
-            <Table columns={overviewColumns} data={paged} />
+            <Table columns={overviewColumns} data={paged} onSort={handleSort} sortConfig={sortConfig} />
             <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
           </div>
         </>
@@ -561,7 +604,7 @@ export default function Fees() {
               </div>
             ) : (
               <>
-                <Table columns={paymentColumns} data={histPaged} />
+                <Table columns={paymentColumns} data={histPaged} onSort={handleHistSort} sortConfig={histSortConfig} />
                 <Pagination page={histPage} totalPages={histTotalPages} onPageChange={setHistPage} />
               </>
             )}

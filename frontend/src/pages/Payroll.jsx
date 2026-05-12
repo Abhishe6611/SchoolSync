@@ -39,6 +39,8 @@ export default function Payroll() {
   // Pagination
   const [page, setPage] = useState(1);
   const [structPage, setStructPage] = useState(1);
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+  const [structSortConfig, setStructSortConfig] = useState({ key: null, direction: 'asc' });
   const pageSize = 10;
 
   // ── Data Fetching ──
@@ -131,12 +133,54 @@ export default function Payroll() {
     return { total, paid, pending, count: payslips.length };
   }, [payslips]);
 
-  // ── Pagination ──
-  const totalPages = Math.max(1, Math.ceil(payslips.length / pageSize));
-  const pagedSlips = payslips.slice((page - 1) * pageSize, page * pageSize);
+  // ── Sorting + Pagination ──
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') direction = 'desc';
+    setSortConfig({ key, direction });
+  };
 
-  const structTotalPages = Math.max(1, Math.ceil(structures.length / pageSize));
-  const pagedStructs = structures.slice((structPage - 1) * pageSize, structPage * pageSize);
+  const handleStructSort = (key) => {
+    let direction = 'asc';
+    if (structSortConfig.key === key && structSortConfig.direction === 'asc') direction = 'desc';
+    setStructSortConfig({ key, direction });
+  };
+
+  const sortedPayslips = useMemo(() => {
+    if (!sortConfig.key) return payslips;
+    return [...payslips].sort((a, b) => {
+      let aVal = a[sortConfig.key];
+      let bVal = b[sortConfig.key];
+      if (sortConfig.key === 'staff_id') { aVal = staffName(aVal).toLowerCase(); bVal = staffName(bVal).toLowerCase(); }
+      else if (typeof aVal === 'string') { aVal = aVal.toLowerCase(); bVal = (bVal || "").toLowerCase(); }
+      if (aVal === null || aVal === undefined) aVal = "";
+      if (bVal === null || bVal === undefined) bVal = "";
+      if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [payslips, sortConfig, staffList]);
+
+  const sortedStructures = useMemo(() => {
+    if (!structSortConfig.key) return structures;
+    return [...structures].sort((a, b) => {
+      let aVal = a[structSortConfig.key];
+      let bVal = b[structSortConfig.key];
+      if (structSortConfig.key === 'staff_id') { aVal = staffName(aVal).toLowerCase(); bVal = staffName(bVal).toLowerCase(); }
+      else if (typeof aVal === 'string') { aVal = aVal.toLowerCase(); bVal = (bVal || "").toLowerCase(); }
+      if (aVal === null || aVal === undefined) aVal = "";
+      if (bVal === null || bVal === undefined) bVal = "";
+      if (aVal < bVal) return structSortConfig.direction === 'asc' ? -1 : 1;
+      if (aVal > bVal) return structSortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [structures, structSortConfig, staffList]);
+
+  const totalPages = Math.max(1, Math.ceil(sortedPayslips.length / pageSize));
+  const pagedSlips = sortedPayslips.slice((page - 1) * pageSize, page * pageSize);
+
+  const structTotalPages = Math.max(1, Math.ceil(sortedStructures.length / pageSize));
+  const pagedStructs = sortedStructures.slice((structPage - 1) * pageSize, structPage * pageSize);
 
   // ── Payslip Columns ──
   const payslipColumns = [
@@ -334,7 +378,7 @@ export default function Payroll() {
               </div>
             ) : (
               <>
-                <Table columns={payslipColumns} data={pagedSlips} />
+                <Table columns={payslipColumns} data={pagedSlips} onSort={handleSort} sortConfig={sortConfig} />
                 <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
               </>
             )}
@@ -404,7 +448,7 @@ export default function Payroll() {
               </div>
             ) : (
               <>
-                <Table columns={structColumns} data={pagedStructs} />
+                <Table columns={structColumns} data={pagedStructs} onSort={handleStructSort} sortConfig={structSortConfig} />
                 <Pagination page={structPage} totalPages={structTotalPages} onPageChange={setStructPage} />
               </>
             )}

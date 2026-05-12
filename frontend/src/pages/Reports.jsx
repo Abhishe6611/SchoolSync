@@ -49,13 +49,13 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 export default function Reports() {
   const [activeTab, setActiveTab] = useState("financial"); // financial, demographics, attendance
-  
+
   // Base Data
   const [classes, setClasses] = useState([]);
   const [feeSummary, setFeeSummary] = useState([]);
   const [dashboard, setDashboard] = useState(null);
   const [schoolSettings, setSchoolSettings] = useState(null);
-  
+
   // Chart State
   const chartContainerRef = useRef(null);
   const [chartMode, setChartMode] = useState("daily"); // daily | monthly
@@ -78,11 +78,11 @@ export default function Reports() {
     const fetchBase = async () => {
       try {
         const [cRes, fRes, dRes] = await Promise.all([
-          api.get("/classes"), 
+          api.get("/classes"),
           api.get("/reports/fees"),
           api.get("/reports/dashboard")
         ]);
-        setClasses(cRes.data); 
+        setClasses(cRes.data);
         setFeeSummary(fRes.data);
         setDashboard(dRes.data);
       } catch (err) {
@@ -90,7 +90,7 @@ export default function Reports() {
       }
     };
     fetchBase();
-    api.get("/admin/school-settings").then(r => setSchoolSettings(r.data)).catch(() => {});
+    api.get("/admin/school-settings").then(r => setSchoolSettings(r.data)).catch(() => { });
   }, []);
 
   const loadAttendance = async () => {
@@ -188,131 +188,213 @@ export default function Reports() {
       {/* ──────────────── TAB 1: FINANCIAL ANALYTICS ──────────────── */}
       {activeTab === "financial" && (
         <div className="space-y-6 animate-slide-up" style={{ animationDelay: "100ms", opacity: 0, animationFillMode: "forwards" }}>
-          
+
           {/* Revenue Area Chart */}
-          <div 
-            className="card h-[450px] relative group flex flex-col" 
+          <div
+            className="card h-[450px] relative group flex flex-col shadow-sm border border-slate-100 dark:border-slate-800"
             ref={chartContainerRef}
           >
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-sm font-semibold text-[#212529]">
-                Fee Collection Trend
-              </h2>
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h2 className="text-base font-bold text-[#212529] dark:text-slate-800">
+                  Fee Collection Trend
+                </h2>
+                <p className="text-xs text-slate-500 mt-1 font-medium">Daily and monthly revenue overview</p>
+              </div>
               <div className="flex items-center gap-4">
-                <div className="text-xs text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-md shadow-sm border border-slate-200 dark:border-slate-700">
-                  Scroll to zoom, drag to pan
+                <div className="text-xs text-slate-500 bg-slate-50 dark:bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center gap-2 font-medium">
+                  <svg className="h-3.5 w-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
+                  </svg>
+                  Hold <kbd className="px-1.5 py-0.5 bg-white dark:bg-slate-700 border dark:border-slate-600 rounded text-[10px] font-bold shadow-sm mx-0.5 text-slate-700 dark:text-slate-300">Ctrl</kbd> + Scroll to zoom
                 </div>
-                <select 
-                  className="select-field py-1.5 text-xs h-auto min-w-[120px] dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200" 
-                  value={chartMode} 
-                  onChange={(e) => setChartMode(e.target.value)}
-                >
-                  <option value="daily">Daily View</option>
-                  <option value="monthly">Monthly View</option>
-                </select>
+                <div className="bg-slate-100 dark:bg-slate-800 rounded-lg p-1 flex">
+                  <button
+                    onClick={() => setChartMode("daily")}
+                    className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${chartMode === "daily" ? "bg-white dark:bg-slate-700 text-[#212529] dark:text-slate-100 shadow-sm" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}
+                  >
+                    Daily
+                  </button>
+                  <button
+                    onClick={() => setChartMode("monthly")}
+                    className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${chartMode === "monthly" ? "bg-white dark:bg-slate-700 text-[#212529] dark:text-slate-100 shadow-sm" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}
+                  >
+                    Monthly
+                  </button>
+                </div>
               </div>
             </div>
-            <div className="flex-1 w-full min-h-0">
-            {(() => {
-              const fullData = chartMode === "monthly" ? dashboard?.fee_collection_trend : dashboard?.daily_fee_collection_trend;
-              if (!fullData?.length) return <div className="flex h-full items-center justify-center text-sm text-slate-400">No revenue data available.</div>;
-              
-              const labels = fullData.map(d => chartMode === "monthly" ? d.month : d.date);
-              const dataValues = fullData.map(d => d.amount);
+            <div className="flex-1 w-full min-h-0 relative">
+              {(() => {
+                const fullData = chartMode === "monthly" ? dashboard?.fee_collection_trend : dashboard?.daily_fee_collection_trend;
+                if (!fullData?.length) return <div className="flex h-full items-center justify-center text-sm text-slate-400 font-medium">No revenue data available.</div>;
 
-              const data = {
-                labels,
-                datasets: [
-                  {
-                    label: 'Revenue Collected',
-                    data: dataValues,
-                    borderColor: '#10b981',
-                    borderWidth: 3,
-                    fill: true,
-                    backgroundColor: (context) => {
-                      const chart = context.chart;
-                      const {ctx, chartArea} = chart;
-                      if (!chartArea) return 'rgba(16, 185, 129, 0.1)';
-                      const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-                      gradient.addColorStop(0, 'rgba(16, 185, 129, 0.3)');
-                      gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
-                      return gradient;
-                    },
-                    pointBackgroundColor: '#10b981',
-                    pointBorderColor: '#10b981',
-                    pointRadius: 0,
-                    pointHoverRadius: 6,
-                    tension: 0.4,
-                  }
-                ]
-              };
+                const labels = fullData.map(d => chartMode === "monthly" ? d.month : d.date);
+                const dataValues = fullData.map(d => d.amount);
 
-              const options = {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: {
-                  mode: 'index',
-                  intersect: false,
-                },
-                plugins: {
-                  legend: { display: false },
-                  tooltip: {
-                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                    titleColor: '#64748b',
-                    bodyColor: '#10b981',
-                    borderColor: '#e2e8f0',
-                    borderWidth: 1,
-                    padding: 12,
-                    callbacks: {
-                      label: (context) => `₹${context.raw.toLocaleString('en-IN')}`
+                // Helper: recalculate Y-axis bounds based on visible X range
+                const adjustYAxis = (chart) => {
+                  const xScale = chart.scales.x;
+                  const dataset = chart.data.datasets[0].data;
+                  // Include 1 adjacent point on each side so connecting lines stay visible
+                  const minIndex = Math.max(0, Math.floor(xScale.min) - 1);
+                  const maxIndex = Math.min(dataset.length - 1, Math.ceil(xScale.max) + 1);
+                  const visibleSlice = dataset.slice(minIndex, maxIndex + 1);
+                  if (visibleSlice.length === 0) return;
+                  const yMin = Math.min(...visibleSlice);
+                  const yMax = Math.max(...visibleSlice);
+                  const padding = (yMax - yMin) * 0.15 || yMax * 0.1 || 100;
+                  chart.options.scales.y.min = Math.max(0, Math.floor(yMin - padding));
+                  chart.options.scales.y.max = Math.ceil(yMax + padding);
+                  chart.update('none');
+                };
+
+                // Helper: reset Y-axis to auto
+                const resetYAxis = (chart) => {
+                  chart.options.scales.y.min = undefined;
+                  chart.options.scales.y.max = undefined;
+                  chart.update('none');
+                };
+
+                const data = {
+                  labels,
+                  datasets: [
+                    {
+                      label: 'Revenue Collected',
+                      data: dataValues,
+                      borderColor: '#10b981',
+                      borderWidth: 3,
+                      fill: true,
+                      backgroundColor: (context) => {
+                        const chart = context.chart;
+                        const { ctx, chartArea } = chart;
+                        if (!chartArea) return 'rgba(16, 185, 129, 0.1)';
+                        const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                        gradient.addColorStop(0, 'rgba(16, 185, 129, 0.35)');
+                        gradient.addColorStop(0.6, 'rgba(16, 185, 129, 0.05)');
+                        gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
+                        return gradient;
+                      },
+                      pointBackgroundColor: '#ffffff',
+                      pointBorderColor: '#10b981',
+                      pointBorderWidth: 2,
+                      pointRadius: dataValues.length <= 20 ? 5 : 0,
+                      pointHoverRadius: 7,
+                      pointHoverBackgroundColor: '#10b981',
+                      pointHoverBorderColor: '#ffffff',
+                      pointHoverBorderWidth: 3,
+                      tension: dataValues.length <= 5 ? 0 : 0.3,
                     }
+                  ]
+                };
+
+                const options = {
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  layout: {
+                    padding: { top: 10, bottom: 0, left: -5, right: 10 }
                   },
-                  zoom: {
-                    pan: {
-                      enabled: true,
-                      mode: 'x',
+                  interaction: {
+                    mode: 'index',
+                    intersect: false,
+                  },
+                  plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                      backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                      titleColor: '#e2e8f0',
+                      bodyColor: '#34d399',
+                      bodyFont: { size: 14, weight: 'bold' },
+                      titleFont: { size: 12, weight: 'normal' },
+                      padding: 12,
+                      cornerRadius: 8,
+                      displayColors: false,
+                      callbacks: {
+                        label: (context) => `Revenue: ₹${context.raw.toLocaleString('en-IN')}`,
+                        title: (items) => `${chartMode === 'daily' ? 'Date' : 'Month'}: ${items[0].label}`
+                      }
                     },
                     zoom: {
-                      wheel: { enabled: true },
-                      pinch: { enabled: true },
-                      mode: 'x',
-                    }
-                  }
-                },
-                scales: {
-                  x: {
-                    grid: {
-                      display: true,
-                      color: '#e2e8f0',
-                      drawBorder: false,
-                      tickLength: 10,
-                      borderDash: [3, 3]
-                    },
-                    ticks: {
-                      autoSkip: true,
-                      maxTicksLimit: 12,
-                      color: '#64748b',
-                      font: { size: 12 }
+                      limits: {
+                        x: { minRange: 2 },
+                      },
+                      pan: {
+                        enabled: true,
+                        mode: 'x',
+                        modifierKey: 'ctrl',
+                        onPanComplete: ({ chart }) => adjustYAxis(chart),
+                      },
+                      zoom: {
+                        wheel: {
+                          enabled: true,
+                          modifierKey: 'ctrl',
+                        },
+                        pinch: { enabled: true },
+                        mode: 'x',
+                        onZoomComplete: ({ chart }) => adjustYAxis(chart),
+                      }
                     }
                   },
-                  y: {
-                    grid: {
-                      display: true,
-                      color: '#e2e8f0',
-                      drawBorder: false,
-                      borderDash: [3, 3]
+                  scales: {
+                    x: {
+                      grid: {
+                        display: false,
+                        drawBorder: false,
+                      },
+                      ticks: {
+                        autoSkip: true,
+                        maxTicksLimit: 10,
+                        color: '#94a3b8',
+                        font: { size: 11, weight: '500' },
+                        padding: 8
+                      },
+                      border: { display: false }
                     },
-                    ticks: {
-                      color: '#64748b',
-                      font: { size: 12 },
-                      callback: (val) => `₹${val/1000}k`
+                    y: {
+                      grid: {
+                        color: 'rgba(226, 232, 240, 0.5)',
+                        drawBorder: false,
+                        borderDash: [4, 4]
+                      },
+                      ticks: {
+                        color: '#94a3b8',
+                        font: { size: 11, weight: '500' },
+                        padding: 12,
+                        callback: (val) => val >= 1000 ? `₹${(val / 1000).toFixed(1)}k` : `₹${val}`
+                      },
+                      border: { display: false }
                     }
                   }
-                }
-              };
+                };
 
-              return <Line data={data} options={options} />;
-            })()}
+                return (
+                  <div className="relative w-full h-full">
+                    <Line
+                      data={data}
+                      options={options}
+                      ref={(ref) => {
+                        if (ref) window.__feeChart = ref;
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (window.__feeChart) {
+                          window.__feeChart.resetZoom();
+                          resetYAxis(window.__feeChart);
+                        }
+                      }}
+                      className="absolute top-2 right-2 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-md transition-all opacity-70 hover:opacity-100 flex items-center gap-1.5 shadow-sm border border-slate-200 dark:border-slate-700"
+                      title="Reset Zoom"
+                    >
+                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" />
+                      </svg>
+                      Reset
+                    </button>
+                  </div>
+                );
+              })()}
             </div>
           </div>
 
@@ -350,10 +432,10 @@ export default function Reports() {
                         <div className={`h-full rounded-full ${c.bar} transition-all duration-700`} style={{ width: `${pct}%` }} />
                       </div>
                       <div className="mt-3 pt-2 border-t border-black/5 flex justify-end">
-                        <button 
-                           type="button"
-                           onClick={() => openFeeDetails(item.status)}
-                           className={`text-[10px] font-bold uppercase tracking-wider ${c.text} hover:opacity-100 opacity-70 transition-opacity flex items-center gap-1`}
+                        <button
+                          type="button"
+                          onClick={() => openFeeDetails(item.status)}
+                          className={`text-[10px] font-bold uppercase tracking-wider ${c.text} hover:opacity-100 opacity-70 transition-opacity flex items-center gap-1`}
                         >
                           View Details
                           <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -373,7 +455,7 @@ export default function Reports() {
       {/* ──────────────── TAB 2: DEMOGRAPHICS ──────────────── */}
       {activeTab === "demographics" && (
         <div className="space-y-6 animate-slide-up" style={{ animationDelay: "100ms", opacity: 0, animationFillMode: "forwards" }}>
-          
+
           <div className="grid lg:grid-cols-2 gap-6">
             {/* Admissions Trend */}
             <div className="card h-80 flex flex-col">
@@ -449,7 +531,7 @@ export default function Reports() {
       {/* ──────────────── TAB 3: ATTENDANCE ──────────────── */}
       {activeTab === "attendance" && (
         <div className="space-y-6 animate-slide-up" style={{ animationDelay: "100ms", opacity: 0, animationFillMode: "forwards" }}>
-          
+
           <div className="card">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-semibold text-[#212529]">Attendance Query Builder</h2>
@@ -457,14 +539,14 @@ export default function Reports() {
                 <ImportExportToolbar
                   data={attendance.records}
                   columns={
-                    attType === "student" 
-                    ? [
+                    attType === "student"
+                      ? [
                         { key: "student_name", label: "Student Name" },
                         { key: "date", label: "Date" },
                         { key: "status", label: "Status" },
                         { key: "remarks", label: "Remarks" }
                       ]
-                    : [
+                      : [
                         { key: "staff_name", label: "Staff Name" },
                         { key: "date", label: "Date" },
                         { key: "status", label: "Status" },
@@ -476,7 +558,7 @@ export default function Reports() {
                 />
               )}
             </div>
-            
+
             <div className="grid gap-4 md:grid-cols-5 items-end">
               <div>
                 <label className="block text-xs font-semibold text-[#495057] mb-1">Target Group</label>
@@ -485,7 +567,7 @@ export default function Reports() {
                   <option value="staff">All Staff</option>
                 </select>
               </div>
-              
+
               {attType === "student" && (
                 <div>
                   <label className="block text-xs font-semibold text-[#495057] mb-1">Class</label>
@@ -495,7 +577,7 @@ export default function Reports() {
                   </select>
                 </div>
               )}
-              
+
               <div>
                 <label className="block text-xs font-semibold text-[#495057] mb-1">Start Date</label>
                 <input className="input-field" type="date" value={start} onChange={(e) => setStart(e.target.value)} />
@@ -504,17 +586,17 @@ export default function Reports() {
                 <label className="block text-xs font-semibold text-[#495057] mb-1">End Date</label>
                 <input className="input-field" type="date" value={end} onChange={(e) => setEnd(e.target.value)} />
               </div>
-              
+
               <button type="button" className="btn-primary py-2.5 h-[42px]" onClick={loadAttendance}>Generate Report</button>
             </div>
-            
+
             {attendance && (
               <div className="mt-8 border-t pt-6" style={{ borderColor: "var(--color-border)" }}>
                 <h3 className="text-sm font-bold text-[#212529] mb-4">
-                  Results for {attType === "student" ? `Class ${classes.find(c => String(c.id) === classId)?.name || ''}` : "All Staff"} 
+                  Results for {attType === "student" ? `Class ${classes.find(c => String(c.id) === classId)?.name || ''}` : "All Staff"}
                   <span className="font-normal text-[#868e96] ml-2">({start} to {end})</span>
                 </h3>
-                
+
                 {Object.keys(attendance.totals).length > 0 ? (
                   attType === "student" ? (
                     <div className="grid gap-4 md:grid-cols-4">
@@ -604,7 +686,7 @@ export default function Reports() {
                         if (selectedClass && item.class_name !== selectedClass) return false;
                         return true;
                       });
-                      
+
                       if (filtered.length === 0) return <tr><td colSpan="5" className="px-6 py-8 text-center text-sm text-[#868e96]">No matching records found.</td></tr>;
 
                       return filtered.map((row) => (

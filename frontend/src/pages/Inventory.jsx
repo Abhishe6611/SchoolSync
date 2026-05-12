@@ -23,6 +23,8 @@ export default function Inventory() {
   const [itemLogs, setItemLogs] = useState([]);
   const [page, setPage] = useState(1);
   const [logPage, setLogPage] = useState(1);
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+  const [logSortConfig, setLogSortConfig] = useState({ key: null, direction: 'asc' });
   const pageSize = 10;
 
   const fetchItems = async () => { try { const r = await api.get("/inventory"); setItems(r.data); } catch {} };
@@ -75,13 +77,53 @@ export default function Inventory() {
     return { total, lowStock, outOfStock, totalValue };
   }, [items]);
 
-  const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
-  const pagedItems = items.slice((page - 1) * pageSize, page * pageSize);
-  const displayLogs = selectedItem ? itemLogs : logs;
-  const logTotalPages = Math.max(1, Math.ceil(displayLogs.length / pageSize));
-  const pagedLogs = displayLogs.slice((logPage - 1) * pageSize, logPage * pageSize);
-
   const itemName = (id) => { const i = items.find(x => (x._id || x.id) === id); return i ? i.item_name : `Item #${id}`; };
+
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') direction = 'desc';
+    setSortConfig({ key, direction });
+  };
+
+  const handleLogSort = (key) => {
+    let direction = 'asc';
+    if (logSortConfig.key === key && logSortConfig.direction === 'asc') direction = 'desc';
+    setLogSortConfig({ key, direction });
+  };
+
+  const sortedItems = useMemo(() => {
+    if (!sortConfig.key) return items;
+    return [...items].sort((a, b) => {
+      let aVal = a[sortConfig.key];
+      let bVal = b[sortConfig.key];
+      if (typeof aVal === 'string') { aVal = aVal.toLowerCase(); bVal = (bVal || "").toLowerCase(); }
+      if (aVal === null || aVal === undefined) aVal = "";
+      if (bVal === null || bVal === undefined) bVal = "";
+      if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [items, sortConfig]);
+
+  const displayLogs = selectedItem ? itemLogs : logs;
+  const sortedLogs = useMemo(() => {
+    if (!logSortConfig.key) return displayLogs;
+    return [...displayLogs].sort((a, b) => {
+      let aVal = a[logSortConfig.key];
+      let bVal = b[logSortConfig.key];
+      if (typeof aVal === 'string') { aVal = aVal.toLowerCase(); bVal = (bVal || "").toLowerCase(); }
+      if (aVal === null || aVal === undefined) aVal = "";
+      if (bVal === null || bVal === undefined) bVal = "";
+      if (aVal < bVal) return logSortConfig.direction === 'asc' ? -1 : 1;
+      if (aVal > bVal) return logSortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [displayLogs, logSortConfig]);
+
+  const totalPages = Math.max(1, Math.ceil(sortedItems.length / pageSize));
+  const pagedItems = sortedItems.slice((page - 1) * pageSize, page * pageSize);
+  const logTotalPages = Math.max(1, Math.ceil(sortedLogs.length / pageSize));
+  const pagedLogs = sortedLogs.slice((logPage - 1) * pageSize, logPage * pageSize);
 
   const itemColumns = [
     { key: "item_name", label: "Item", render: r => <span className="font-medium text-ink">{r.item_name}</span> },
@@ -225,7 +267,7 @@ export default function Inventory() {
                 <p className="text-sm font-medium text-muted">No inventory items yet.</p>
               </div>
             ) : (
-              <><Table columns={itemColumns} data={pagedItems} /><Pagination page={page} totalPages={totalPages} onPageChange={setPage} /></>
+              <><Table columns={itemColumns} data={pagedItems} onSort={handleSort} sortConfig={sortConfig} /><Pagination page={page} totalPages={totalPages} onPageChange={setPage} /></>
             )}
           </div>
         </>
@@ -246,7 +288,7 @@ export default function Inventory() {
           {displayLogs.length === 0 ? (
             <div className="card text-center py-16"><p className="text-sm font-medium text-muted">No transaction logs found.</p></div>
           ) : (
-            <><Table columns={logColumns} data={pagedLogs} /><Pagination page={logPage} totalPages={logTotalPages} onPageChange={setLogPage} /></>
+            <><Table columns={logColumns} data={pagedLogs} onSort={handleLogSort} sortConfig={logSortConfig} /><Pagination page={logPage} totalPages={logTotalPages} onPageChange={setLogPage} /></>
           )}
         </div>
       )}

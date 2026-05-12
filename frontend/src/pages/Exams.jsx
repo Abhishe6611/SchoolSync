@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import api from "../api/axios";
 import Pagination from "../components/Pagination.jsx";
 import SearchBar from "../components/SearchBar.jsx";
@@ -19,6 +19,7 @@ export default function Exams() {
 
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const limit = 10;
 
   useEffect(() => {
@@ -48,8 +49,29 @@ export default function Exams() {
     ex.name.toLowerCase().includes(search.toLowerCase()) ||
     ex.term.toLowerCase().includes(search.toLowerCase())
   );
-  const totalPages = Math.ceil(filtered.length / limit);
-  const paged = filtered.slice((page - 1) * limit, page * limit);
+
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') direction = 'desc';
+    setSortConfig({ key, direction });
+  };
+
+  const sortedFiltered = useMemo(() => {
+    if (!sortConfig.key) return filtered;
+    return [...filtered].sort((a, b) => {
+      let aVal = a[sortConfig.key];
+      let bVal = b[sortConfig.key];
+      if (typeof aVal === 'string') { aVal = aVal.toLowerCase(); bVal = (bVal || "").toLowerCase(); }
+      if (aVal === null || aVal === undefined) aVal = "";
+      if (bVal === null || bVal === undefined) bVal = "";
+      if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [filtered, sortConfig]);
+
+  const totalPages = Math.ceil(sortedFiltered.length / limit);
+  const paged = sortedFiltered.slice((page - 1) * limit, page * limit);
 
   const handleBulkAdd = async () => {
     if (!form.class_id || !form.term || !form.date) {
@@ -312,7 +334,7 @@ export default function Exams() {
             onImportSuccess={fetchData}
           />
         </div>
-        <Table columns={columns} data={paged} />
+        <Table columns={columns} data={paged} onSort={handleSort} sortConfig={sortConfig} />
         <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
       </div>
     </div>
