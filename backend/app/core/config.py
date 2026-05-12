@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     MONGODB_DB_NAME: str
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 5256000 # 10 years (effectively infinite for production)
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440 # 1 day
     CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000"
 
     class Config:
