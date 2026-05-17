@@ -341,13 +341,23 @@ export default function Students() {
   const handleCropDone = async (blob) => {
     setCropperSrc(null);
     if (!selectedStudent) return;
+    
+    // Optimistic UI update: show local blob immediately
+    const tempUrl = URL.createObjectURL(blob);
+    setSelectedStudent(prev => ({ ...prev, photo_url: tempUrl }));
+
     const formData = new FormData();
     formData.append("file", new File([blob], "avatar.jpg", { type: "image/jpeg" }));
     try {
       const res = await api.post(`/students/${selectedStudent.id}/photo`, formData, { headers: { "Content-Type": "multipart/form-data" } });
-      setSelectedStudent({ ...selectedStudent, photo_url: res.data.photo_url });
+      // Append timestamp to bypass browser cache for the newly uploaded image
+      const finalUrl = `${res.data.photo_url}?t=${new Date().getTime()}`;
+      setSelectedStudent(prev => ({ ...prev, photo_url: finalUrl }));
+      setStudents(prev => prev.map(s => s.id === selectedStudent.id ? { ...s, photo_url: finalUrl } : s));
+    } catch (err) { 
+      alert("Photo upload failed."); 
       await fetchData();
-    } catch (err) { alert("Photo upload failed."); }
+    }
   };
 
   const handleAddNew = () => {
@@ -379,7 +389,10 @@ export default function Students() {
   ];
 
   const getAvatarUrl = (person) => {
-    if (person?.photo_url) return `${API_BASE}${person.photo_url}`;
+    if (person?.photo_url) {
+      if (person.photo_url.startsWith("blob:")) return person.photo_url;
+      return `${API_BASE}${person.photo_url}`;
+    }
     return `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent((person?.first_name || "U") + " " + (person?.last_name || ""))}&backgroundColor=212529&textColor=ffffff&fontSize=40`;
   };
 
