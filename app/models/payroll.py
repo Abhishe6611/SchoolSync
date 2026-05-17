@@ -19,8 +19,8 @@ class Payslip(BaseDocument):
     month: int
     year: int
     total_working_days: int = 0
-    days_present: int = 0
-    unpaid_leave_days: int = 0
+    days_present: float = 0.0
+    unpaid_leave_days: float = 0.0
     base_salary: float = 0.0
     total_allowances: float = 0.0
     leave_deduction: float = 0.0
