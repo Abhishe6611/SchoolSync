@@ -60,7 +60,8 @@ export const generateIdCards = async (people, type = "student") => {
       await new Promise((resolve, reject) => {
         img.onload = resolve;
         img.onerror = reject;
-        img.src = `${API_BASE}${schoolData.logo_url}?t=${new Date().getTime()}`;
+        const basePath = schoolData.logo_url.split('?')[0];
+        img.src = `${API_BASE}${basePath}?t=${new Date().getTime()}`;
       });
       const canvas = document.createElement("canvas");
       canvas.width = img.width;
@@ -151,7 +152,14 @@ export const generateIdCards = async (people, type = "student") => {
         await new Promise((resolve, reject) => {
           pImg.onload = resolve;
           pImg.onerror = reject;
-          pImg.src = `${API_BASE}${person.photo_url}?t=${new Date().getTime()}`;
+          
+          let imgUrl = person.photo_url;
+          if (imgUrl.startsWith("blob:") || imgUrl.startsWith("http")) {
+            pImg.src = imgUrl;
+          } else {
+            const basePath = imgUrl.split('?')[0];
+            pImg.src = `${API_BASE}${basePath}?t=${new Date().getTime()}`;
+          }
         });
         doc.addImage(pImg, "JPEG", contentX + 0.5, y + 12.5, 17, 21);
       } catch {
