@@ -24,7 +24,78 @@ const getDayName = (dateString) => {
 };
 
 /**
- * Generate Hall Ticket PDF(s) matching the premium template
+ * Load an image with a timeout. Returns the Image element or null on failure.
+ * @param {string} url - Full URL to load
+ * @param {number} timeoutMs - Max wait time in milliseconds
+ */
+const loadImageWithTimeout = (url, timeoutMs = 5000) => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    const timer = setTimeout(() => {
+      img.onload = null;
+      img.onerror = null;
+      resolve(null);
+    }, timeoutMs);
+    img.onload = () => { clearTimeout(timer); resolve(img); };
+    img.onerror = () => { clearTimeout(timer); resolve(null); };
+    img.src = url;
+  });
+};
+
+/**
+ * Pre-load all images in parallel (logo + all student photos).
+ * Returns { logoImg, photoMap: { [studentId]: Image|null } }
+ */
+const preloadAllImages = async (schoolData, studentList) => {
+  const promises = [];
+
+  // Logo (loaded once)
+  if (schoolData?.logo_url) {
+    promises.push(
+      loadImageWithTimeout(`${API_BASE}${schoolData.logo_url}`, 8000)
+        .then(img => ({ type: "logo", img }))
+    );
+  }
+
+  // Student photos (all in parallel)
+  for (const student of studentList) {
+    if (student.photo_url) {
+      promises.push(
+        loadImageWithTimeout(`${API_BASE}${student.photo_url}`, 5000)
+          .then(img => ({ type: "photo", id: student.id, img }))
+      );
+    }
+  }
+
+  const results = await Promise.all(promises);
+
+  let logoImg = null;
+  const photoMap = {};
+  for (const r of results) {
+    if (r.type === "logo") logoImg = r.img;
+    else if (r.type === "photo") photoMap[r.id] = r.img;
+  }
+
+  return { logoImg, photoMap };
+};
+
+/**
+ * Draw a placeholder shield when logo is unavailable
+ */
+const drawShieldPlaceholder = (doc, gold) => {
+  doc.setDrawColor(...gold);
+  doc.setLineWidth(1);
+  doc.line(10, 10, 35, 10);
+  doc.line(35, 10, 35, 30);
+  doc.line(35, 30, 22.5, 35);
+  doc.line(22.5, 35, 10, 30);
+  doc.line(10, 30, 10, 10);
+};
+
+/**
+ * Generate Hall Ticket PDF(s) matching the premium template.
+ * Optimized for bulk: all images are pre-loaded in parallel before PDF generation.
  */
 export const generateHallTicket = async (students, examSchedule, term) => {
   const studentList = Array.isArray(students) ? students : [students];
@@ -34,6 +105,18 @@ export const generateHallTicket = async (students, examSchedule, term) => {
   const tagline = "LEARN • GROW • EXCEL";
   const contactInfo = `www.${schoolName.toLowerCase().replace(/\s/g, "")}.edu.in | 9876543210`;
   const academicYear = "2024-25";
+
+  // Pre-load ALL images in parallel before generating any pages
+  const { logoImg, photoMap } = await preloadAllImages(schoolData, studentList);
+
+  // Pre-compute the exam table data (same for every student)
+  const tableData = examSchedule.map(ex => [
+    ex.date,
+    getDayName(ex.date),
+    ex.subject_code || (ex.name ? ex.name.substring(0,3).toUpperCase() : "SUB"),
+    ex.name || "Subject",
+    "09:00 AM - 12:00 PM"
+  ]);
 
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const navy = [20, 43, 89];
@@ -53,27 +136,11 @@ export const generateHallTicket = async (students, examSchedule, term) => {
     // 1. HEADER SECTION
     // ==========================================
     
-    // Logo (Shield Style Placeholder)
-    if (schoolData?.logo_url) {
-      try {
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        await new Promise((resolve, reject) => {
-          img.onload = resolve;
-          img.onerror = reject;
-          img.src = `${API_BASE}${schoolData.logo_url}?t=${new Date().getTime()}`;
-        });
-        doc.addImage(img, "PNG", 10, 10, 25, 25);
-      } catch { 
-        // Draw a placeholder shield if logo fails
-        doc.setDrawColor(...gold);
-        doc.setLineWidth(1);
-        doc.line(10, 10, 35, 10);
-        doc.line(35, 10, 35, 30);
-        doc.line(35, 30, 22.5, 35);
-        doc.line(22.5, 35, 10, 30);
-        doc.line(10, 30, 10, 10);
-      }
+    // Logo — use pre-loaded image (no network call per student)
+    if (logoImg) {
+      doc.addImage(logoImg, "PNG", 10, 10, 25, 25);
+    } else if (schoolData?.logo_url) {
+      drawShieldPlaceholder(doc, gold);
     }
 
     // School Name & Tagline
@@ -164,21 +231,9 @@ export const generateHallTicket = async (students, examSchedule, term) => {
     // Student Photo Box
     doc.setDrawColor(180, 180, 180);
     doc.rect(110, 62, 38, 48);
-    if (student.photo_url) {
-      try {
-        const sImg = new Image();
-        sImg.crossOrigin = "anonymous";
-        await new Promise((resolve, reject) => {
-          sImg.onload = resolve;
-          sImg.onerror = reject;
-          sImg.src = `${API_BASE}${student.photo_url}?t=${new Date().getTime()}`;
-        });
-        doc.addImage(sImg, "JPEG", 110.5, 62.5, 37, 47);
-      } catch {
-        doc.setFontSize(7);
-        doc.setTextColor(150, 150, 150);
-        doc.text("STUDENT PHOTO", 129, 87, { align: "center" });
-      }
+    const studentPhoto = photoMap[student.id];
+    if (studentPhoto) {
+      doc.addImage(studentPhoto, "JPEG", 110.5, 62.5, 37, 47);
     } else {
       doc.setFontSize(7);
       doc.setTextColor(150, 150, 150);
@@ -206,14 +261,6 @@ export const generateHallTicket = async (students, examSchedule, term) => {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(10);
     doc.text("EXAMINATION SCHEDULE", 115, 120, { align: "center" });
-
-    const tableData = examSchedule.map(ex => [
-      ex.date,
-      getDayName(ex.date),
-      ex.subject_code || (ex.name ? ex.name.substring(0,3).toUpperCase() : "SUB"),
-      ex.name || "Subject",
-      "09:00 AM - 12:00 PM"
-    ]);
 
     autoTable(doc, {
       startY: 125,
