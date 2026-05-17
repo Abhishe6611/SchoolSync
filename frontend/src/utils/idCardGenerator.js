@@ -51,30 +51,69 @@ export const generateIdCards = async (people, type = "student") => {
   let x = marginX;
   let y = marginY;
 
-  // Try to load logo
-  let logoBase64 = null;
-  if (schoolData?.logo_url) {
-    try {
+  // --- PRELOAD HELPER ---
+  const loadImageWithTimeout = (url, timeoutMs = 5000) => {
+    return new Promise((resolve) => {
       const img = new Image();
       img.crossOrigin = "anonymous";
-      await new Promise((resolve, reject) => {
-        img.onload = resolve;
-        img.onerror = reject;
-        const basePath = schoolData.logo_url.split('?')[0];
-        img.src = `${API_BASE}${basePath}?t=${new Date().getTime()}`;
-      });
-      const canvas = document.createElement("canvas");
-      canvas.width = img.width;
-      canvas.height = img.height;
-      canvas.getContext("2d").drawImage(img, 0, 0);
-      logoBase64 = canvas.toDataURL("image/png");
-    } catch {
-      logoBase64 = null;
+      
+      const timer = setTimeout(() => {
+        img.src = "";
+        resolve(null);
+      }, timeoutMs);
+
+      img.onload = () => {
+        clearTimeout(timer);
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+        resolve({ img, dataUrl: canvas.toDataURL("image/png") });
+      };
+      
+      img.onerror = () => {
+        clearTimeout(timer);
+        resolve(null);
+      };
+      
+      img.src = url;
+    });
+  };
+
+  // --- PRELOAD ALL IMAGES PARALLEL ---
+  // 1. Prepare Logo URL
+  let logoFetchUrl = null;
+  if (schoolData?.logo_url) {
+    let lUrl = schoolData.logo_url;
+    if (!lUrl.startsWith("http") && !lUrl.startsWith("blob:")) {
+      lUrl = `${API_BASE}${lUrl.split('?')[0]}?t=${new Date().getTime()}`;
     }
+    logoFetchUrl = lUrl;
   }
 
+  // 2. Prepare Person Photo URLs
+  const photoFetchPromises = people.map(person => {
+    if (!person.photo_url) return Promise.resolve(null);
+    let pUrl = person.photo_url;
+    if (!pUrl.startsWith("http") && !pUrl.startsWith("blob:")) {
+      pUrl = `${API_BASE}${pUrl.split('?')[0]}?t=${new Date().getTime()}`;
+    }
+    return loadImageWithTimeout(pUrl);
+  });
+
+  // 3. Fire all requests at once
+  const [logoResult, ...photoResults] = await Promise.all([
+    logoFetchUrl ? loadImageWithTimeout(logoFetchUrl) : Promise.resolve(null),
+    ...photoFetchPromises
+  ]);
+
+  const logoBase64 = logoResult ? logoResult.dataUrl : null;
+
+  // --- GENERATE PDF ---
   for (let i = 0; i < people.length; i++) {
     const person = people[i];
+    const photoBase64 = photoResults[i] ? photoResults[i].dataUrl : null;
 
     if (y + h > 280) {
       doc.addPage();
@@ -145,23 +184,9 @@ export const generateIdCards = async (people, type = "student") => {
     doc.setDrawColor(240, 240, 240);
     doc.setFillColor(...lightGray);
     doc.roundedRect(contentX, y + 12, 18, 22, 1, 1, "FD");
-    if (person.photo_url) {
+    if (photoBase64) {
       try {
-        const pImg = new Image();
-        pImg.crossOrigin = "anonymous";
-        await new Promise((resolve, reject) => {
-          pImg.onload = resolve;
-          pImg.onerror = reject;
-          
-          let imgUrl = person.photo_url;
-          if (imgUrl.startsWith("blob:") || imgUrl.startsWith("http")) {
-            pImg.src = imgUrl;
-          } else {
-            const basePath = imgUrl.split('?')[0];
-            pImg.src = `${API_BASE}${basePath}?t=${new Date().getTime()}`;
-          }
-        });
-        doc.addImage(pImg, "JPEG", contentX + 0.5, y + 12.5, 17, 21);
+        doc.addImage(photoBase64, "PNG", contentX + 0.5, y + 12.5, 17, 21);
       } catch {
         // Fallback silhouette
         doc.setFillColor(200, 200, 200);
