@@ -35,6 +35,28 @@ const GRADE_FEES = {
   10: { tuition: 70000, other: 12000 },
 };
 
+const GRADE_AGE_LIMITS = {
+  1: { min: 5, max: 7 },
+  2: { min: 6, max: 8 },
+  3: { min: 7, max: 9 },
+  4: { min: 8, max: 10 },
+  5: { min: 9, max: 11 },
+  6: { min: 10, max: 12 },
+  7: { min: 11, max: 13 },
+  8: { min: 12, max: 14 },
+  9: { min: 13, max: 15 },
+  10: { min: 14, max: 16 },
+};
+
+const calculateAge = (dob) => {
+  const birth = new Date(`${dob}T00:00:00`);
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  return age;
+};
+
 const extractGradeNumber = (className) => {
   const match = className?.match(/(\d+)/);
   if (match) {
@@ -221,6 +243,20 @@ export default function Students() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
+      // DOB Minimum Age Validation
+      if (form.dob && form.class_id) {
+        const selectedClass = classes.find(c => String(c.id) === String(form.class_id));
+        const grade = selectedClass ? extractGradeNumber(selectedClass.name) : null;
+        if (grade && GRADE_AGE_LIMITS[grade]) {
+          const age = calculateAge(form.dob);
+          const { min } = GRADE_AGE_LIMITS[grade];
+          if (age < min) {
+            alert(`Student must be at least ${min} years old for Grade ${grade}. Current age: ${age}.`);
+            return;
+          }
+        }
+      }
+
       const payload = { 
         ...form, 
         class_id: Number(form.class_id),
@@ -524,7 +560,7 @@ export default function Students() {
                 <div className="card">
                   <h3 className="text-sm font-semibold text-[#212529] mb-4">Personal Information</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8">
-                    <DetailItem label="Date of Birth" value={selectedStudent.dob} icon="🎂" />
+                    <DetailItem label="Date of Birth" value={formatDate(selectedStudent.dob)} icon="🎂" />
                     <DetailItem label="Gender" value={selectedStudent.gender} icon="👤" />
                     <DetailItem label="Blood Group" value={selectedStudent.blood_group} icon="🩸" />
                     <DetailItem label="Religion" value={selectedStudent.religion} icon="🙏" />
@@ -565,7 +601,39 @@ export default function Students() {
                 <div className="grid gap-4 md:grid-cols-3">
                   <div><label className="block text-xs font-semibold text-[#495057] mb-1">First Name <span className="text-red-500">*</span></label><input className="input-field" value={form.first_name} onChange={(e) => setForm({ ...form, first_name: sanitizeName(e.target.value) })} required minLength={2} maxLength={50} title="Only letters and spaces allowed (2–50 chars)" /></div>
                   <div><label className="block text-xs font-semibold text-[#495057] mb-1">Last Name <span className="text-red-500">*</span></label><input className="input-field" value={form.last_name} onChange={(e) => setForm({ ...form, last_name: sanitizeName(e.target.value) })} required minLength={2} maxLength={50} title="Only letters and spaces allowed (2–50 chars)" /></div>
-                  <div><label className="block text-xs font-semibold text-[#495057] mb-1">Date of Birth <span className="text-red-500">*</span></label><input type="date" className="input-field" value={form.dob} max={new Date().toISOString().split("T")[0]} onChange={(e) => setForm({ ...form, dob: e.target.value })} required /></div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[#495057] mb-1">Date of Birth <span className="text-red-500">*</span></label>
+                    <input type="date" className="input-field" value={form.dob}
+                      max={(() => {
+                        if (!form.class_id) return new Date().toISOString().split("T")[0];
+                        const cls = classes.find(c => String(c.id) === String(form.class_id));
+                        const grade = cls ? extractGradeNumber(cls.name) : null;
+                        if (grade && GRADE_AGE_LIMITS[grade]) {
+                          const d = new Date();
+                          d.setFullYear(d.getFullYear() - GRADE_AGE_LIMITS[grade].min);
+                          return d.toISOString().split("T")[0];
+                        }
+                        return new Date().toISOString().split("T")[0];
+                      })()}
+                      onFocus={(e) => {
+                        if (!form.class_id) {
+                          e.target.blur();
+                          alert("Please select a Class first before choosing Date of Birth.");
+                        }
+                      }}
+                      onChange={(e) => setForm({ ...form, dob: e.target.value })}
+                      required
+                      disabled={!form.class_id}
+                    />
+                    {form.class_id && (() => {
+                      const cls = classes.find(c => String(c.id) === String(form.class_id));
+                      const grade = cls ? extractGradeNumber(cls.name) : null;
+                      if (grade && GRADE_AGE_LIMITS[grade]) {
+                        return <p className="text-[10px] text-[#868e96] mt-1">Minimum age: {GRADE_AGE_LIMITS[grade].min} years for Grade {grade}</p>;
+                      }
+                      return null;
+                    })()}
+                  </div>
                   
                   <div>
                     <label className="block text-xs font-semibold text-[#495057] mb-1">Gender <span className="text-red-500">*</span></label>

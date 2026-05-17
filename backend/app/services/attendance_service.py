@@ -81,18 +81,18 @@ async def get_class_overview() -> list[dict]:
         cls_records = [r for r in month_records if r.class_id == cls.id and r.student_id in student_ids]
         today_records = [r for r in cls_records if r.date == today]
 
-        present_today = sum(1 for r in today_records if r.status.lower() == "present")
+        present_today = sum(1 for r in today_records if r.status.lower() == "present") + sum(0.5 for r in today_records if r.status.lower() == "half day")
         holidays_today = sum(1 for r in today_records if r.status.lower() == "holiday")
         is_holiday_today = holidays_today > 0 and holidays_today >= total_students
 
         # Count distinct working days (days where at least one non-holiday record exists)
         working_days = len(set(
-            r.date for r in cls_records if r.status.lower() in ("present", "absent")
+            r.date for r in cls_records if r.status.lower() in ("present", "absent", "half day")
         ))
 
         # Monthly stats
-        month_present = sum(1 for r in cls_records if r.status.lower() == "present")
-        month_total = sum(1 for r in cls_records if r.status.lower() in ("present", "absent"))
+        month_present = sum(1 for r in cls_records if r.status.lower() == "present") + sum(0.5 for r in cls_records if r.status.lower() == "half day")
+        month_total = sum(1 for r in cls_records if r.status.lower() in ("present", "absent", "half day"))
         expected_total = working_days * total_students
         month_pct = round((month_present / expected_total) * 100) if expected_total > 0 else 0
 

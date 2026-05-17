@@ -12,6 +12,7 @@ export default function StaffAttendance() {
   const [regYear, setRegYear] = useState(new Date().getFullYear());
   const [bulkDate, setBulkDate] = useState("");
   const [error, setError] = useState("");
+  const [wageModal, setWageModal] = useState({ open: false, staffId: null, dateStr: null, status: 'present', overtime_hours: 0, advance_deduction: 0, penalty: 0, name: "" });
 
   // 1. Fetch Staff
   useEffect(() => {
@@ -56,7 +57,7 @@ export default function StaffAttendance() {
       // r.date is "YYYY-MM-DD"
       const day = Number(r.date.split("-")[2]);
       if (!map[r.staff_id]) map[r.staff_id] = {};
-      map[r.staff_id][day] = r.status;
+      map[r.staff_id][day] = r;
     });
     return map;
   }, [attendanceRecords]);
@@ -67,9 +68,11 @@ export default function StaffAttendance() {
     dayColumns.forEach(d => {
       let p = 0, t = 0;
       staff.forEach(s => {
-        const st = regMap[s.id]?.[d];
+        const st = regMap[s.id]?.[d]?.status;
         if (st) {
           if (st.toLowerCase() === "present") { p++; t++; }
+          else if (st.toLowerCase() === "half-day") { p += 0.5; t++; }
+          else if (st.toLowerCase() === "overtime") { p++; t++; }
           else if (st.toLowerCase() === "absent") { t++; }
         }
       });
@@ -88,6 +91,8 @@ export default function StaffAttendance() {
     if (!status) return "text-[#ced4da] cursor-pointer hover:bg-gray-50";
     const s = status.toLowerCase();
     if (s === "present") return "bg-emerald-50 text-emerald-700 font-bold cursor-pointer hover:bg-emerald-100";
+    if (s === "half-day") return "bg-amber-50 text-amber-600 font-bold cursor-pointer hover:bg-amber-100";
+    if (s === "overtime") return "bg-orange-50 text-orange-600 font-bold cursor-pointer hover:bg-orange-100";
     if (s === "absent") return "bg-red-50 text-red-600 font-bold cursor-pointer hover:bg-red-100";
     if (s === "holiday") return "bg-blue-50 text-blue-600 font-bold cursor-pointer hover:bg-blue-100";
     if (s === "training") return "bg-purple-50 text-purple-600 font-bold cursor-pointer hover:bg-purple-100";
@@ -97,24 +102,28 @@ export default function StaffAttendance() {
     if (!status) return "—";
     const s = status.toLowerCase();
     if (s === "present") return "P";
+    if (s === "half-day") return "HD";
+    if (s === "overtime") return "OT";
     if (s === "absent") return "A";
     if (s === "holiday") return "H";
     if (s === "training") return "T";
     return s[0].toUpperCase();
   };
 
-  // Toggle state cycler: null -> Present -> Absent -> Holiday -> Training -> Present...
+  // Toggle state cycler: null -> Present -> Half Day -> Absent -> Holiday -> Training -> Present...
   const getNextStatus = (current) => {
     if (!current) return "present";
     const s = current.toLowerCase();
-    if (s === "present") return "absent";
+    if (s === "present") return "half-day";
+    if (s === "half-day") return "overtime";
+    if (s === "overtime") return "absent";
     if (s === "absent") return "holiday";
     if (s === "holiday") return "training";
     return "present";
   };
 
   // Click handler
-  const handleCellClick = async (staffId, day, currentStatus) => {
+  const handleCellClick = async (staffMember, day, currentRecord) => {
     const dateStr = `${regYear}-${String(regMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     const todayStr = new Date().toISOString().split("T")[0];
     if (dateStr > todayStr) {
@@ -122,27 +131,59 @@ export default function StaffAttendance() {
       setTimeout(() => setError(""), 3000);
       return;
     }
-    const nextStatus = getNextStatus(currentStatus);
+    
+    if (staffMember.employment_type === "daily") {
+      setWageModal({
+        open: true,
+        staffId: staffMember.id,
+        dateStr,
+        name: `${staffMember.first_name} ${staffMember.last_name}`,
+        status: currentRecord?.status || "present",
+        overtime_hours: currentRecord?.overtime_hours || 0,
+        advance_deduction: currentRecord?.advance_deduction || 0,
+        penalty: currentRecord?.penalty || 0
+      });
+      return;
+    }
+
+    const nextStatus = getNextStatus(currentRecord?.status);
     
     // Optimistic UI update
     const tempId = Date.now();
     setAttendanceRecords(prev => {
-      const filtered = prev.filter(r => !(r.staff_id === staffId && r.date === dateStr));
-      return [...filtered, { id: tempId, staff_id: staffId, date: dateStr, status: nextStatus }];
+      const filtered = prev.filter(r => !(r.staff_id === staffMember.id && r.date === dateStr));
+      return [...filtered, { id: tempId, staff_id: staffMember.id, date: dateStr, status: nextStatus }];
     });
 
     try {
       await api.post("/staff-attendance", {
-        staff_id: staffId,
+        staff_id: staffMember.id,
         date: dateStr,
         status: nextStatus,
         remarks: ""
       });
-      // Optionally re-fetch quietly or let the optimistic update stand
     } catch (err) {
       console.error(err);
-      // Revert if error
       fetchAttendance();
+    }
+  };
+
+  const handleWageSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await api.post("/staff-attendance", {
+        staff_id: wageModal.staffId,
+        date: wageModal.dateStr,
+        status: wageModal.status,
+        overtime_hours: Number(wageModal.overtime_hours),
+        advance_deduction: Number(wageModal.advance_deduction),
+        penalty: Number(wageModal.penalty),
+        remarks: ""
+      });
+      setWageModal({ ...wageModal, open: false });
+      fetchAttendance();
+    } catch (err) {
+      alert("Failed to save daily wage attendance.");
     }
   };
 
@@ -214,6 +255,7 @@ export default function StaffAttendance() {
               </div>
               <div className="flex gap-2">
                 <button onClick={() => handleBulkAction('present')} disabled={saving} className="btn-primary py-2 px-3 text-[12px] bg-emerald-600 hover:bg-emerald-700">All Present</button>
+                <button onClick={() => handleBulkAction('half-day')} disabled={saving} className="btn-primary py-2 px-3 text-[12px] bg-amber-600 hover:bg-amber-700">All Half Day</button>
                 <button onClick={() => handleBulkAction('holiday')} disabled={saving} className="btn-primary py-2 px-3 text-[12px] bg-blue-600 hover:bg-blue-700">All Holiday</button>
                 <button onClick={() => handleBulkAction('training')} disabled={saving} className="btn-primary py-2 px-3 text-[12px] bg-purple-600 hover:bg-purple-700">All Training</button>
               </div>
@@ -224,6 +266,8 @@ export default function StaffAttendance() {
           
           <div className="mt-4 pt-4 border-t border-[#e9ecef] flex flex-wrap items-center gap-4 text-[11px] font-semibold text-[#868e96]">
             <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded bg-emerald-100 border border-emerald-200"></span> P = Present</span>
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded bg-amber-100 border border-amber-200"></span> HD = Half Day</span>
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded bg-orange-100 border border-orange-200"></span> OT = Overtime</span>
             <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded bg-red-100 border border-red-200"></span> A = Absent</span>
             <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded bg-blue-100 border border-blue-200"></span> H = Holiday</span>
             <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded bg-purple-100 border border-purple-200"></span> T = Training</span>
@@ -255,9 +299,11 @@ export default function StaffAttendance() {
                   const sMap = regMap[s.id] || {};
                   let totalP = 0, totalW = 0;
                   dayColumns.forEach(d => {
-                    const st = sMap[d];
+                    const st = sMap[d]?.status;
                     if (st) {
                       if (st.toLowerCase() === "present") { totalP++; totalW++; }
+                      else if (st.toLowerCase() === "half-day") { totalP += 0.5; totalW++; }
+                      else if (st.toLowerCase() === "overtime") { totalP++; totalW++; }
                       else if (st.toLowerCase() === "absent") { totalW++; }
                     }
                   });
@@ -271,14 +317,16 @@ export default function StaffAttendance() {
                         </div>
                       </td>
                       {dayColumns.map(d => {
-                        const st = sMap[d];
+                        const record = sMap[d];
+                        const st = record?.status;
                         return (
                           <td 
                             key={d} 
-                            onClick={() => handleCellClick(s.id, d, st)}
+                            onClick={() => handleCellClick(s, d, record)}
                             className={`px-0 py-2 text-center border-r border-[#f1f3f5] transition-colors ${cellStyle(st)}`}
                           >
                             {cellLabel(st)}
+                            {s.employment_type === "daily" && record?.gross_wage > 0 && <div className="text-[8px] text-green-600 mt-0.5">₹{record.gross_wage}</div>}
                           </td>
                         );
                       })}
@@ -306,6 +354,46 @@ export default function StaffAttendance() {
           </div>
         </div>
       </div>
+      {wageModal.open && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 animate-slide-up">
+            <h3 className="text-lg font-bold text-ink mb-1">Daily Wage Attendance</h3>
+            <p className="text-xs text-muted mb-5">{wageModal.name} — {wageModal.dateStr}</p>
+            <form onSubmit={handleWageSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-muted mb-1">Status</label>
+                <select className="select-field" value={wageModal.status} onChange={e => setWageModal({ ...wageModal, status: e.target.value })}>
+                  <option value="present">Present</option>
+                  <option value="half-day">Half Day</option>
+                  <option value="overtime">Overtime</option>
+                  <option value="absent">Absent</option>
+                  <option value="holiday">Holiday</option>
+                </select>
+              </div>
+              {wageModal.status === "overtime" && (
+                <div>
+                  <label className="block text-xs font-semibold text-muted mb-1">Overtime Hours</label>
+                  <input type="number" step="0.5" min="0" className="input-field" value={wageModal.overtime_hours} onChange={e => setWageModal({ ...wageModal, overtime_hours: e.target.value })} />
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-muted mb-1">Advances (₹)</label>
+                  <input type="number" step="1" min="0" className="input-field" value={wageModal.advance_deduction} onChange={e => setWageModal({ ...wageModal, advance_deduction: e.target.value })} />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-muted mb-1">Penalty (₹)</label>
+                  <input type="number" step="1" min="0" className="input-field" value={wageModal.penalty} onChange={e => setWageModal({ ...wageModal, penalty: e.target.value })} />
+                </div>
+              </div>
+              <div className="flex items-center gap-3 mt-6">
+                <button type="submit" className="btn-primary flex-1">Save Wage</button>
+                <button type="button" onClick={() => setWageModal({ ...wageModal, open: false })} className="btn-secondary flex-1">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

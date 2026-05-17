@@ -12,7 +12,7 @@ import { sanitizeName, sanitizeDigits, sanitizeEmail, sanitizeText } from "../ut
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
-const emptyForm = { first_name: "", last_name: "", role: "", email: "", phone: "", hire_date: "", address: "", gender: "", dob: "", blood_group: "", qualification: "", experience_years: "" };
+const emptyForm = { first_name: "", last_name: "", role: "", email: "", phone: "", hire_date: "", address: "", gender: "", dob: "", blood_group: "", qualification: "", experience_years: "", employment_type: "monthly", is_temporary: false, daily_rate: 0 };
 
 export default function Staff() {
   const [staff, setStaff] = useState([]);
@@ -90,7 +90,7 @@ export default function Staff() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
-      const payload = { ...form, experience_years: Number(form.experience_years) };
+      const payload = { ...form, experience_years: Number(form.experience_years), daily_rate: Number(form.daily_rate) || 0 };
 
       let res;
       if (editingId) { 
@@ -129,7 +129,8 @@ export default function Staff() {
       email: selectedStaff.email || "", phone: selectedStaff.phone || "", hire_date: selectedStaff.hire_date,
       address: selectedStaff.address || "", gender: selectedStaff.gender || "", dob: selectedStaff.dob || "",
       blood_group: selectedStaff.blood_group || "", qualification: selectedStaff.qualification || "",
-      experience_years: selectedStaff.experience_years || ""
+      experience_years: selectedStaff.experience_years || "", employment_type: selectedStaff.employment_type || "monthly",
+      is_temporary: selectedStaff.is_temporary || false, daily_rate: selectedStaff.daily_rate || 0
     });
     setIsEditing(true);
   };
@@ -318,7 +319,7 @@ export default function Staff() {
                     <DetailItem label="Email" value={selectedStaff.email} icon="✉️" />
                     <DetailItem label="Phone" value={selectedStaff.phone} icon="📞" />
                     <DetailItem label="Gender" value={selectedStaff.gender} icon="👤" />
-                    <DetailItem label="Date of Birth" value={selectedStaff.dob} icon="🎂" />
+                    <DetailItem label="Date of Birth" value={formatDate(selectedStaff.dob)} icon="🎂" />
                     <DetailItem label="Blood Group" value={selectedStaff.blood_group} icon="🩸" />
                     <DetailItem label="Qualification" value={selectedStaff.qualification} icon="🎓" />
                     <DetailItem label="Experience" value={`${selectedStaff.experience_years} years`} icon="⭐" />
@@ -367,6 +368,26 @@ export default function Staff() {
                   
                   <div><label className="block text-xs font-semibold text-[#495057] mb-1">Qualification <span className="text-red-500">*</span></label><input className="input-field" placeholder="e.g. M.Sc, B.Ed" value={form.qualification} onChange={(e) => setForm({ ...form, qualification: sanitizeText(e.target.value) })} required minLength={2} maxLength={100} title="2–100 characters" /></div>
                   <div><label className="block text-xs font-semibold text-[#495057] mb-1">Experience (Years) <span className="text-red-500">*</span></label><input className="input-field" type="number" min="0" max="50" value={form.experience_years} onChange={(e) => setForm({ ...form, experience_years: e.target.value })} required title="0–50 years" /></div>
+                  
+                  <div><label className="block text-xs font-semibold text-[#495057] mb-1">Employment Type <span className="text-red-500">*</span></label>
+                    <select className="select-field" value={form.employment_type} onChange={(e) => setForm({ ...form, employment_type: e.target.value })} required>
+                      <option value="monthly">Monthly Salary</option>
+                      <option value="daily">Daily Wage</option>
+                    </select>
+                  </div>
+                  
+                  {form.employment_type === "daily" && (
+                    <>
+                      <div><label className="block text-xs font-semibold text-[#495057] mb-1">Daily Rate (₹) <span className="text-red-500">*</span></label><input className="input-field" type="number" min="0" step="1" value={form.daily_rate} onChange={(e) => setForm({ ...form, daily_rate: e.target.value })} required /></div>
+                      <div className="flex items-end pb-2">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input type="checkbox" checked={form.is_temporary} onChange={(e) => setForm({ ...form, is_temporary: e.target.checked })} className="w-4 h-4 accent-[#4263eb] rounded" />
+                          <span className="text-sm font-semibold text-[#495057]">Is Temporary Staff</span>
+                        </label>
+                      </div>
+                    </>
+                  )}
+
                   <div className="md:col-span-2 lg:col-span-3"><label className="block text-xs font-semibold text-[#495057] mb-1">Address <span className="text-red-500">*</span></label><input className="input-field" placeholder="Full residential address" value={form.address} onChange={(e) => setForm({ ...form, address: sanitizeText(e.target.value) })} required minLength={5} maxLength={255} title="5–255 characters" /></div>
                   
                   <div>

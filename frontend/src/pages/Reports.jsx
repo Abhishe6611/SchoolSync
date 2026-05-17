@@ -38,6 +38,7 @@ const defaultC = { bg: "bg-[#f1f3f5]", text: "text-[#495057]", border: "border-l
 
 const attColors = {
   present: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-l-emerald-400",
+  "half day": "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-l-amber-400",
   absent: "bg-red-500/15 text-red-700 dark:text-red-400 border-l-red-400",
   late: "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-l-amber-400",
   excused: "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-l-blue-400",
@@ -614,13 +615,15 @@ export default function Reports() {
                     <div className="grid gap-4 md:grid-cols-1 max-w-lg mx-auto">
                       {(() => {
                         const present = attendance.totals["present"] || 0;
+                        const halfDay = attendance.totals["half day"] || 0;
+                        const presentEquivalent = present + (halfDay * 0.5);
                         const total = Object.values(attendance.totals).reduce((sum, count) => sum + count, 0);
-                        const percentage = total > 0 ? ((present / total) * 100).toFixed(1) : 0;
+                        const percentage = total > 0 ? ((presentEquivalent / total) * 100).toFixed(1) : 0;
                         return (
                           <div className="rounded-xl border-l-4 border-l-emerald-400 p-8 bg-emerald-50/50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 animate-slide-up text-center shadow-sm">
                             <div className="text-[13px] font-bold uppercase tracking-wider opacity-80 mb-2">Percentage of Teachers Present</div>
                             <div className="text-5xl font-heading font-bold">{percentage}%</div>
-                            <div className="text-sm mt-3 opacity-80 font-medium">({present} out of {total} total attendance records)</div>
+                            <div className="text-sm mt-3 opacity-80 font-medium">({presentEquivalent} equivalent out of {total} total attendance records)</div>
                           </div>
                         );
                       })()}

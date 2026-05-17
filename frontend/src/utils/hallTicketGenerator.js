@@ -164,9 +164,26 @@ export const generateHallTicket = async (students, examSchedule, term) => {
     // Student Photo Box
     doc.setDrawColor(180, 180, 180);
     doc.rect(110, 62, 38, 48);
-    doc.setFontSize(7);
-    doc.setTextColor(150, 150, 150);
-    doc.text("STUDENT PHOTO", 129, 87, { align: "center" });
+    if (student.photo_url) {
+      try {
+        const sImg = new Image();
+        sImg.crossOrigin = "anonymous";
+        await new Promise((resolve, reject) => {
+          sImg.onload = resolve;
+          sImg.onerror = reject;
+          sImg.src = `${API_BASE}${student.photo_url}?t=${new Date().getTime()}`;
+        });
+        doc.addImage(sImg, "JPEG", 110.5, 62.5, 37, 47);
+      } catch {
+        doc.setFontSize(7);
+        doc.setTextColor(150, 150, 150);
+        doc.text("STUDENT PHOTO", 129, 87, { align: "center" });
+      }
+    } else {
+      doc.setFontSize(7);
+      doc.setTextColor(150, 150, 150);
+      doc.text("STUDENT PHOTO", 129, 87, { align: "center" });
+    }
 
     // Barcode & Signature
     const canvas = document.createElement("canvas");

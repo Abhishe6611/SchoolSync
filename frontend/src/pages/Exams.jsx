@@ -4,6 +4,7 @@ import Pagination from "../components/Pagination.jsx";
 import SearchBar from "../components/SearchBar.jsx";
 import Table from "../components/Table.jsx";
 import ImportExportToolbar from "../components/ImportExportToolbar.jsx";
+import { formatDate } from "../utils/dateFormatter.js";
 import { sanitizeText } from "../utils/inputSanitizer.js";
 
 const emptyForm = { name: "", term: "", date: "", class_id: "", max_marks: "", description: "", exam_type: "FA1", subject_code: "" };
@@ -20,7 +21,11 @@ export default function Exams() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+  const [activeType, setActiveType] = useState("FA1");
+  const [activeClass, setActiveClass] = useState(null);
   const limit = 10;
+  
+  const EXAM_TYPES = ["FA1", "FA2", "SA1", "FA3", "FA4", "SA2"];
 
   useEffect(() => {
     fetchData();
@@ -45,10 +50,28 @@ export default function Exams() {
 
   const classMap = new Map(classesList.map((c) => [c.id, c.name]));
 
-  const filtered = exams.filter((ex) =>
-    ex.name.toLowerCase().includes(search.toLowerCase()) ||
-    ex.term.toLowerCase().includes(search.toLowerCase())
-  );
+  const typeExams = useMemo(() => exams.filter(ex => ex.exam_type === activeType), [exams, activeType]);
+  
+  const availableClasses = useMemo(() => {
+    const ids = [...new Set(typeExams.map(ex => ex.class_id))];
+    return classesList.filter(c => ids.includes(c.id));
+  }, [typeExams, classesList]);
+
+  useEffect(() => {
+    if (availableClasses.length > 0) {
+      if (!activeClass || !availableClasses.some(c => c.id === activeClass)) {
+        setActiveClass(availableClasses[0].id);
+      }
+    } else {
+      setActiveClass(null);
+    }
+  }, [availableClasses, activeClass]);
+
+  const filtered = useMemo(() => typeExams.filter((ex) => {
+    if (ex.class_id !== activeClass) return false;
+    const term = search.toLowerCase();
+    return ex.name.toLowerCase().includes(term) || ex.term.toLowerCase().includes(term);
+  }), [typeExams, activeClass, search]);
 
   const handleSort = (key) => {
     let direction = 'asc';
@@ -159,11 +182,9 @@ export default function Exams() {
 
   const columns = [
     { key: "id", label: "ID" },
-    { key: "name", label: "Exam Name" },
+    { key: "name", label: "Subject" },
     { key: "term", label: "Term" },
-    { key: "date", label: "Date" },
-    { key: "exam_type", label: "Type" },
-    { key: "class_id", label: "Class", render: (row) => classMap.get(row.class_id) || row.class_id },
+    { key: "date", label: "Date", render: (row) => formatDate(row.date) },
     { key: "max_marks", label: "Max Marks" },
     {
       key: "actions",
@@ -321,21 +342,66 @@ export default function Exams() {
       </form>
 
       <div className="flex flex-col gap-4 animate-slide-up" style={{ animationDelay: "200ms", opacity: 0, animationFillMode: "forwards" }}>
+        {/* Level 1: Exam Type Tabs */}
+        <div className="flex gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-800 w-fit overflow-x-auto max-w-full">
+          {EXAM_TYPES.map(type => (
+            <button
+              key={type}
+              onClick={() => { setActiveType(type); setPage(1); }}
+              className={`whitespace-nowrap px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 ${
+                activeType === type
+                  ? "bg-white dark:bg-slate-700 text-ink shadow-sm"
+                  : "text-muted hover:text-ink"
+              }`}
+            >
+              {type}
+            </button>
+          ))}
+        </div>
+
+        {/* Level 2: Class Pills */}
+        {availableClasses.length > 0 && (
+          <div className="flex gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-800 w-fit overflow-x-auto max-w-full">
+            {availableClasses.map(cls => (
+              <button
+                key={cls.id}
+                onClick={() => { setActiveClass(cls.id); setPage(1); }}
+                className={`whitespace-nowrap px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 ${
+                  activeClass === cls.id
+                    ? "bg-white dark:bg-slate-700 text-ink shadow-sm"
+                    : "text-muted hover:text-ink"
+                }`}
+              >
+                {cls.name}
+              </button>
+            ))}
+          </div>
+        )}
+
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <SearchBar value={search} onChange={setSearch} placeholder="Search exams..." />
+          <SearchBar value={search} onChange={setSearch} placeholder="Search subjects..." />
           <ImportExportToolbar
             data={filtered.map(r => {
               return { ...r, class_name: classMap.get(r.class_id) || r.class_id };
             })}
-            columns={[...columns.filter(c => c.key !== "class_id" && c.key !== "actions"), { key: "class_name", label: "Class" }]}
-            filename="Exams_Export"
+            columns={[...columns, { key: "class_name", label: "Class" }]}
+            filename={`Exams_${activeType}_Export`}
             templateFields={Object.keys(emptyForm)}
             importEndpoint="/exams/import"
             onImportSuccess={fetchData}
           />
         </div>
-        <Table columns={columns} data={paged} onSort={handleSort} sortConfig={sortConfig} />
-        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+        
+        {availableClasses.length === 0 ? (
+          <div className="card text-center py-16">
+            <p className="text-sm font-medium text-muted">No exams scheduled for {activeType}.</p>
+          </div>
+        ) : (
+          <>
+            <Table columns={columns} data={paged} onSort={handleSort} sortConfig={sortConfig} />
+            <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+          </>
+        )}
       </div>
     </div>
   );

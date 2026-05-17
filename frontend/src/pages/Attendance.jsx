@@ -146,7 +146,11 @@ export default function Attendance() {
       let p = 0, t = 0;
       classStudents.forEach(s => {
         const st = regMap[s.id]?.[d];
-        if (st) { if (st.toLowerCase() === "present") { p++; t++; } else if (st.toLowerCase() === "absent") { t++; } }
+        if (st) { 
+          if (st.toLowerCase() === "present") { p++; t++; } 
+          else if (st.toLowerCase() === "half day") { p += 0.5; t++; }
+          else if (st.toLowerCase() === "absent") { t++; } 
+        }
       });
       totals[d] = { p, t };
     });
@@ -159,6 +163,7 @@ export default function Attendance() {
     if (!status) return "text-[#ced4da]";
     const s = status.toLowerCase();
     if (s === "present") return "bg-emerald-50 text-emerald-700 font-bold";
+    if (s === "half day") return "bg-amber-50 text-amber-600 font-bold";
     if (s === "absent") return "bg-red-50 text-red-600 font-bold";
     if (s === "holiday") return "bg-blue-50 text-blue-600 font-bold";
     return "";
@@ -167,6 +172,7 @@ export default function Attendance() {
     if (!status) return "—";
     const s = status.toLowerCase();
     if (s === "present") return "P";
+    if (s === "half day") return "HD";
     if (s === "absent") return "A";
     if (s === "holiday") return "H";
     return s[0].toUpperCase();
@@ -278,6 +284,9 @@ export default function Attendance() {
                   <button onClick={() => handleBulkAction("present")} disabled={saving} className="btn-primary py-2.5 px-4 text-xs">
                     {saving ? "Saving..." : "✓ Mark All Present"}
                   </button>
+                  <button onClick={() => handleBulkAction("half day")} disabled={saving} className="py-2.5 px-4 text-xs font-semibold rounded-lg bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-100 transition-colors">
+                    🌗 Mark All Half Day
+                  </button>
                   <button onClick={() => handleBulkAction("holiday")} disabled={saving} className="py-2.5 px-4 text-xs font-semibold rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 transition-colors">
                     🏖️ Mark as Holiday
                   </button>
@@ -342,7 +351,7 @@ export default function Attendance() {
                             {isHoliday ? (
                               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-50 text-blue-600">🏖️ Holiday</span>
                             ) : record ? (
-                              <span className={`inline-flex px-2.5 py-1 rounded-full text-[11px] font-bold ${record.status.toLowerCase() === "present" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-600"}`}>
+                              <span className={`inline-flex px-2.5 py-1 rounded-full text-[11px] font-bold ${record.status.toLowerCase() === "present" ? "bg-emerald-50 text-emerald-700" : record.status.toLowerCase() === "half day" ? "bg-amber-50 text-amber-600" : "bg-red-50 text-red-600"}`}>
                                 {record.status}
                               </span>
                             ) : (
@@ -357,6 +366,10 @@ export default function Attendance() {
                                 <label className={`flex items-center gap-1.5 cursor-pointer ${!isTeacher && 'opacity-70 cursor-not-allowed'}`}>
                                   <input type="radio" name={`status-${student.id}`} value="present" disabled={!isTeacher} checked={record?.status?.toLowerCase() === 'present'} onChange={() => handleMarkAttendance(student.id, 'present')} className="w-4 h-4 accent-[#40c057]" />
                                   <span className={`text-[13px] font-medium ${record?.status?.toLowerCase() === 'present' ? 'text-[#212529]' : 'text-[#868e96]'}`}>Present</span>
+                                </label>
+                                <label className={`flex items-center gap-1.5 cursor-pointer ${!isTeacher && 'opacity-70 cursor-not-allowed'}`}>
+                                  <input type="radio" name={`status-${student.id}`} value="half day" disabled={!isTeacher} checked={record?.status?.toLowerCase() === 'half day'} onChange={() => handleMarkAttendance(student.id, 'half day')} className="w-4 h-4 accent-[#f59f00]" />
+                                  <span className={`text-[13px] font-medium ${record?.status?.toLowerCase() === 'half day' ? 'text-[#212529]' : 'text-[#868e96]'}`}>Half Day</span>
                                 </label>
                                 <label className={`flex items-center gap-1.5 cursor-pointer ${!isTeacher && 'opacity-70 cursor-not-allowed'}`}>
                                   <input type="radio" name={`status-${student.id}`} value="absent" disabled={!isTeacher} checked={record?.status?.toLowerCase() === 'absent'} onChange={() => handleMarkAttendance(student.id, 'absent')} className="w-4 h-4 accent-[#fa5252]" />
@@ -425,6 +438,7 @@ export default function Attendance() {
                       const st = studentMap[d];
                       if (st) {
                         if (st.toLowerCase() === "present") { totalP++; totalW++; }
+                        else if (st.toLowerCase() === "half day") { totalP += 0.5; totalW++; }
                         else if (st.toLowerCase() === "absent") { totalW++; }
                       }
                     });
@@ -469,6 +483,7 @@ export default function Attendance() {
           {/* Legend */}
           <div className="flex items-center gap-5 text-[11px] font-semibold text-[#868e96] px-1">
             <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-emerald-100 border border-emerald-300" /> P = Present</span>
+            <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-amber-100 border border-amber-300" /> HD = Half Day</span>
             <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-red-100 border border-red-300" /> A = Absent</span>
             <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-blue-100 border border-blue-300" /> H = Holiday</span>
             <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-[#f1f3f5] border border-[#dee2e6]" /> — = No Data</span>

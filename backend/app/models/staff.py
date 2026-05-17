@@ -19,6 +19,9 @@ class Staff(BaseDocument):
     experience_years: Optional[int] = 0
     is_active: bool = True
     photo_url: Optional[str] = None
+    employment_type: str = "monthly"
+    is_temporary: bool = False
+    daily_rate: float = 0.0
 
     class Settings:
         name = "staff"

@@ -17,6 +17,9 @@ class StaffBase(BaseModel):
     blood_group: Optional[str] = Field(None, max_length=10)
     qualification: Optional[str] = Field(None, max_length=100)
     experience_years: Optional[int] = Field(None, ge=0)
+    employment_type: Optional[str] = "monthly"
+    is_temporary: Optional[bool] = False
+    daily_rate: Optional[float] = 0.0
 
 
 class StaffCreate(StaffBase):
@@ -37,6 +40,9 @@ class StaffUpdate(BaseModel):
     qualification: Optional[str] = Field(None, max_length=100)
     experience_years: Optional[int] = Field(None, ge=0)
     is_active: Optional[bool] = None
+    employment_type: Optional[str] = None
+    is_temporary: Optional[bool] = None
+    daily_rate: Optional[float] = None
 
 
 class StaffRead(StaffBase):

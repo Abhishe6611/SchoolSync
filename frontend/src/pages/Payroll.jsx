@@ -36,6 +36,11 @@ export default function Payroll() {
   const [form, setForm] = useState(emptyStructure);
   const [editingId, setEditingId] = useState(null);
 
+  // Daily Wage tab
+  const [dailyWages, setDailyWages] = useState([]);
+  const [dailyStart, setDailyStart] = useState(new Date(now.getFullYear(), now.getMonth(), 2).toISOString().split("T")[0]);
+  const [dailyEnd, setDailyEnd] = useState(now.toISOString().split("T")[0]);
+
   // Pagination
   const [page, setPage] = useState(1);
   const [structPage, setStructPage] = useState(1);
@@ -69,6 +74,17 @@ export default function Payroll() {
   useEffect(() => {
     if (tab === "processing") fetchPayslips();
   }, [tab, month, year]);
+
+  const fetchDailyWages = async () => {
+    try {
+      const res = await api.get(`/payroll/daily-wage-report?start_date=${dailyStart}&end_date=${dailyEnd}`);
+      setDailyWages(res.data);
+    } catch { setDailyWages([]); }
+  };
+
+  useEffect(() => {
+    if (tab === "daily") fetchDailyWages();
+  }, [tab, dailyStart, dailyEnd]);
 
   // ── Handlers ──
   const handleGenerate = async () => {
@@ -261,6 +277,32 @@ export default function Payroll() {
     )},
   ];
 
+  // ── Daily Wage Columns ──
+  const dailyColumns = [
+    { key: "staff_id", label: "Staff", render: (r) => (
+      <div>
+        <div className="font-medium text-ink">{r.name}</div>
+        <div className="text-[10px] text-muted">{r.role}</div>
+      </div>
+    )},
+    { key: "total_paid_days", label: "Paid Days", render: (r) => (
+      <span className="font-mono text-sm">{r.total_paid_days}</span>
+    )},
+    { key: "total_overtime_hours", label: "Overtime (hrs)", render: (r) => (
+      <span className="font-mono text-sm">{r.total_overtime_hours > 0 ? r.total_overtime_hours : "—"}</span>
+    )},
+    { key: "total_gross_wage", label: "Gross Wage", render: (r) => (
+      <span className="font-mono text-sm">₹{r.total_gross_wage.toLocaleString("en-IN")}</span>
+    )},
+    { key: "deductions", label: "Deductions", render: (r) => {
+        const totalDed = r.total_advance + r.total_penalty;
+        return <span className={`font-mono text-sm ${totalDed > 0 ? "text-red-600" : "text-muted"}`}>{totalDed > 0 ? `-₹${totalDed.toLocaleString("en-IN")}` : "₹0"}</span>
+    }},
+    { key: "total_net_payable", label: "Net Payable", render: (r) => (
+      <span className="font-mono text-sm font-bold text-ink">₹{r.total_net_payable.toLocaleString("en-IN")}</span>
+    )},
+  ];
+
   // ── Staff without a salary structure (for dropdown) ──
   const unassignedStaff = staffList.filter((s) => !structures.some((st) => st.staff_id === (s._id || s.id)));
 
@@ -287,6 +329,7 @@ export default function Payroll() {
           {[
             { id: "processing", label: "Monthly Processing" },
             { id: "structure", label: "Salary Structure" },
+            { id: "daily", label: "Daily Wage Timesheet" },
           ].map((t) => (
             <button
               key={t.id}
@@ -451,6 +494,34 @@ export default function Payroll() {
                 <Table columns={structColumns} data={pagedStructs} onSort={handleStructSort} sortConfig={structSortConfig} />
                 <Pagination page={structPage} totalPages={structTotalPages} onPageChange={setStructPage} />
               </>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* ──────── TAB 3: DAILY WAGE TIMESHEET ──────── */}
+      {tab === "daily" && (
+        <>
+          <div className="animate-slide-up" style={{ animationDelay: "120ms", opacity: 0, animationFillMode: "forwards" }}>
+            <div className="flex flex-wrap items-center gap-3">
+              <input type="date" className="input-field !w-auto" value={dailyStart} onChange={(e) => setDailyStart(e.target.value)} />
+              <span className="text-muted text-sm">to</span>
+              <input type="date" className="input-field !w-auto" value={dailyEnd} onChange={(e) => setDailyEnd(e.target.value)} />
+              <button onClick={fetchDailyWages} className="btn-primary">Refresh Data</button>
+            </div>
+          </div>
+
+          <div className="animate-slide-up mt-5" style={{ animationDelay: "200ms", opacity: 0, animationFillMode: "forwards" }}>
+            {dailyWages.length === 0 ? (
+              <div className="card text-center py-16">
+                <svg className="mx-auto h-12 w-12 text-slate-300 dark:text-slate-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-sm font-medium text-muted">No daily wage records found.</p>
+                <p className="text-xs text-muted mt-1">Ensure attendance is marked for daily wage staff in this date range.</p>
+              </div>
+            ) : (
+              <Table columns={dailyColumns} data={dailyWages} />
             )}
           </div>
         </>

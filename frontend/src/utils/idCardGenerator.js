@@ -144,10 +144,28 @@ export const generateIdCards = async (people, type = "student") => {
     doc.setDrawColor(240, 240, 240);
     doc.setFillColor(...lightGray);
     doc.roundedRect(contentX, y + 12, 18, 22, 1, 1, "FD");
-    // Silhouette
-    doc.setFillColor(200, 200, 200);
-    doc.circle(contentX + 9, y + 18, 3.5, "F");
-    doc.ellipse(contentX + 9, y + 28, 6, 5, "F");
+    if (person.photo_url) {
+      try {
+        const pImg = new Image();
+        pImg.crossOrigin = "anonymous";
+        await new Promise((resolve, reject) => {
+          pImg.onload = resolve;
+          pImg.onerror = reject;
+          pImg.src = `${API_BASE}${person.photo_url}?t=${new Date().getTime()}`;
+        });
+        doc.addImage(pImg, "JPEG", contentX + 0.5, y + 12.5, 17, 21);
+      } catch {
+        // Fallback silhouette
+        doc.setFillColor(200, 200, 200);
+        doc.circle(contentX + 9, y + 18, 3.5, "F");
+        doc.ellipse(contentX + 9, y + 28, 6, 5, "F");
+      }
+    } else {
+      // Silhouette placeholder
+      doc.setFillColor(200, 200, 200);
+      doc.circle(contentX + 9, y + 18, 3.5, "F");
+      doc.ellipse(contentX + 9, y + 28, 6, 5, "F");
+    }
 
     // Name
     doc.setTextColor(...textColor);

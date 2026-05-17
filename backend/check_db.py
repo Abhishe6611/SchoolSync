@@ -1,44 +1,29 @@
 import asyncio
+import sys
 import os
-from motor.motor_asyncio import AsyncIOMotorClient
-from beanie import init_beanie
-from app.models.payment import Payment
-from app.core.config import settings
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+from app.database.session import init_db
+from app.models.staff_attendance import StaffAttendance
+from app.models.payroll import Payslip
 
 async def main():
-    client = AsyncIOMotorClient(settings.MONGODB_URL)
-    db = client[settings.MONGODB_DB_NAME]
-    await init_beanie(database=db, document_models=[Payment])
+    await init_db()
     
-    daily_fee_pipeline = [
-        {
-            "$group": {
-                "_id": {"$dateToString": {"format": "%Y-%m-%d", "date": "$payment_date"}},
-                "total_amount": {"$sum": "$amount"}
-            }
-        },
-        {"$sort": {"_id": 1}}
-    ]
-    results = await Payment.aggregate(daily_fee_pipeline).to_list()
-    print("Daily aggregation:", results)
+    from datetime import date
+    start_date = date(2026, 5, 1)
+    end_date = date(2026, 5, 31)
     
-    monthly_pipeline = [
-        {
-            "$group": {
-                "_id": {"$dateToString": {"format": "%Y-%m", "date": "$payment_date"}},
-                "total_amount": {"$sum": "$amount"}
-            }
-        },
-        {"$sort": {"_id": 1}}
-    ]
-    results2 = await Payment.aggregate(monthly_pipeline).to_list()
-    print("Monthly aggregation:", results2)
+    attendances = await StaffAttendance.find(
+        StaffAttendance.date >= start_date,
+        StaffAttendance.date <= end_date
+    ).to_list()
     
-    # check one document
-    doc = await Payment.find_one()
-    if doc:
-        print("Sample doc:", doc.dict())
-        print("Type of payment_date in DB:", type(doc.payment_date))
-
+    print(f"Total May attendances: {len(attendances)}")
+    if attendances:
+        a = attendances[0]
+        print(f"Sample attendance: staff={a.staff_id}, date={a.date}, type={type(a.date)}, status={a.status}")
+        
 if __name__ == "__main__":
     asyncio.run(main())
