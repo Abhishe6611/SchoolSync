@@ -19,7 +19,9 @@ export default function LeaveApproval() {
   const fetchLeaves = async () => {
     setLoading(true);
     try {
-      const res = await api.get(`/teacher-leaves/?status_filter=${filter}`);
+      const res = await api.get("/teacher-leaves", { 
+        params: { status_filter: filter } 
+      });
       setLeaves(res.data);
     } catch (err) {
       console.error(err);

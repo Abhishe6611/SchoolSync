@@ -72,7 +72,7 @@ export default function TeacherLeave() {
 
     setLoading(true);
     try {
-      await api.post("/teacher-leaves/", {
+      await api.post("/teacher-leaves", {
         leave_type: leaveType,
         from_date: fromDate,
         to_date: toDate,
