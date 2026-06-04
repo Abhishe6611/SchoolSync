@@ -85,7 +85,7 @@ async def get_all_leaves(
     leaves = await query.sort("-applied_on").to_list()
     
     staff_ids = list(set(l.staff_id for l in leaves))
-    staff_members = await Staff.find(Staff.id.in_(staff_ids)).to_list()
+    staff_members = await Staff.find(In(Staff.id, staff_ids)).to_list()
     staff_map = {s.id: f"{s.first_name} {s.last_name}" for s in staff_members}
     
     result = []
