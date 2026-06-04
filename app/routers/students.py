@@ -43,9 +43,10 @@ async def create_student_endpoint(
 async def list_students(
     skip: int = 0,
     limit: int = 10000,
+    class_id: int = None,
     _=Depends(require_roles(["admin", "superadmin", "teacher"])),
 ) -> list[StudentRead]:
-    return await get_students(skip=skip, limit=limit)
+    return await get_students(skip=skip, limit=limit, class_id=class_id)
 
 
 @router.get("/passed-out", response_model=list[StudentRead])

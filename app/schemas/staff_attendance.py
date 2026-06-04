@@ -16,9 +16,10 @@ class StaffAttendanceBase(BaseModel):
     @validator('status')
     def validate_status(cls, v):
         allowed = ['present', 'absent', 'half-day', 'overtime', 'holiday', 'training']
-        if v.lower() not in allowed:
+        val = v.lower().replace(' ', '-')
+        if val not in allowed:
             raise ValueError(f"Status must be one of {allowed}")
-        return v.lower()
+        return val
 
     @root_validator(skip_on_failure=True)
     def check_overtime(cls, values):

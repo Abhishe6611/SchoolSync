@@ -27,8 +27,11 @@ async def create_student(student_in: StudentCreate) -> Student:
 
     return student
 
-async def get_students(skip: int = 0, limit: int = 100) -> list[Student]:
-    return await Student.find(Student.is_active == True).skip(skip).limit(limit).to_list()
+async def get_students(skip: int = 0, limit: int = 100, class_id: int = None) -> list[Student]:
+    query = Student.find(Student.is_active == True)
+    if class_id is not None:
+        query = Student.find(Student.is_active == True, Student.class_id == class_id)
+    return await query.skip(skip).limit(limit).to_list()
 
 async def get_passed_out_students(skip: int = 0, limit: int = 10000) -> list[Student]:
     return await Student.find(Student.is_active == False).skip(skip).limit(limit).to_list()

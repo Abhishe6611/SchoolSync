@@ -6,6 +6,8 @@ class Grade(BaseDocument):
     student_id: int
     subject_id: int
     marks_obtained: float
+    internal_marks: Optional[float] = 0.0
+    external_marks: Optional[float] = 0.0
     remarks: Optional[str] = None
 
     class Settings:

@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -12,8 +12,9 @@ if sys.platform == 'win32':
 
 
 from app.core.config import settings
+from app.core.dependencies import get_current_user
 from app.database.session import init_db
-from app.routers import attendance, auth, classes, fees, exams, reports, staff, students, subjects, audit, timetable, transport, staff_attendance, payroll, inventory, admin_controls
+from app.routers import attendance, auth, classes, fees, exams, grades, reports, staff, students, subjects, audit, timetable, transport, staff_attendance, payroll, inventory, admin_controls, report_cards, teacher_leaves
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -36,21 +37,28 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(auth.router, prefix="/auth", tags=["auth"])
-    app.include_router(students.router, prefix="/students", tags=["students"])
-    app.include_router(staff.router, prefix="/staff", tags=["staff"])
-    app.include_router(classes.router, prefix="/classes", tags=["classes"])
-    app.include_router(subjects.router, prefix="/subjects", tags=["subjects"])
-    app.include_router(attendance.router, prefix="/attendance", tags=["attendance"])
-    app.include_router(staff_attendance.router, prefix="/staff-attendance", tags=["staff-attendance"])
-    app.include_router(fees.router, prefix="/fees", tags=["fees"])
-    app.include_router(exams.router, prefix="/exams", tags=["exams"])
-    app.include_router(reports.router, prefix="/reports", tags=["reports"])
-    app.include_router(timetable.router)
-    app.include_router(audit.router)
-    app.include_router(transport.router, prefix="/transport", tags=["transport"])
-    app.include_router(payroll.router, prefix="/payroll", tags=["payroll"])
-    app.include_router(inventory.router, prefix="/inventory", tags=["inventory"])
-    app.include_router(admin_controls.router, prefix="/admin", tags=["admin"])
+    
+    # Require authentication for all subsequent routers
+    protected_dependencies = [Depends(get_current_user)]
+
+    app.include_router(students.router, prefix="/students", tags=["students"], dependencies=protected_dependencies)
+    app.include_router(staff.router, prefix="/staff", tags=["staff"], dependencies=protected_dependencies)
+    app.include_router(classes.router, prefix="/classes", tags=["classes"], dependencies=protected_dependencies)
+    app.include_router(subjects.router, prefix="/subjects", tags=["subjects"], dependencies=protected_dependencies)
+    app.include_router(attendance.router, prefix="/attendance", tags=["attendance"], dependencies=protected_dependencies)
+    app.include_router(staff_attendance.router, prefix="/staff-attendance", tags=["staff-attendance"], dependencies=protected_dependencies)
+    app.include_router(fees.router, prefix="/fees", tags=["fees"], dependencies=protected_dependencies)
+    app.include_router(exams.router, prefix="/exams", tags=["exams"], dependencies=protected_dependencies)
+    app.include_router(reports.router, prefix="/reports", tags=["reports"], dependencies=protected_dependencies)
+    app.include_router(timetable.router, dependencies=protected_dependencies)
+    app.include_router(audit.router, dependencies=protected_dependencies)
+    app.include_router(transport.router, prefix="/transport", tags=["transport"], dependencies=protected_dependencies)
+    app.include_router(payroll.router, prefix="/payroll", tags=["payroll"], dependencies=protected_dependencies)
+    app.include_router(inventory.router, prefix="/inventory", tags=["inventory"], dependencies=protected_dependencies)
+    app.include_router(admin_controls.router, prefix="/admin", tags=["admin"], dependencies=protected_dependencies)
+    app.include_router(grades.router, dependencies=protected_dependencies)
+    app.include_router(report_cards.router, prefix="/report-cards", tags=["report cards"], dependencies=protected_dependencies)
+    app.include_router(teacher_leaves.router, prefix="/teacher-leaves", tags=["teacher_leaves"], dependencies=protected_dependencies)
 
     # Serve uploaded files
     uploads_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads")
