@@ -13,6 +13,7 @@ router = APIRouter()
 from beanie.operators import In
 
 @router.post("/", response_model=TeacherLeaveRead)
+@router.post("", response_model=TeacherLeaveRead)
 async def apply_for_leave(
     leave_in: TeacherLeaveCreate,
     current_user: AdminUser = Depends(require_roles(["teacher"]))
@@ -72,6 +73,7 @@ async def cancel_my_leave(
     return leave
 
 @router.get("/", response_model=List[TeacherLeaveAdminRead])
+@router.get("", response_model=List[TeacherLeaveAdminRead])
 async def get_all_leaves(
     status_filter: str = "all",
     _=Depends(require_roles(["admin", "superadmin"]))
