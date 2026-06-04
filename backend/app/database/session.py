@@ -24,6 +24,8 @@ async def init_db() -> None:
     from app.models.inventory import InventoryItem, InventoryLog
     from app.models.school_settings import SchoolSettings
     from app.models.exam import Exam
+    from app.models.grade import Grade
+    from app.models.teacher_leave import TeacherLeave
 
     # Build explicit SSL context for Python 3.13 + Windows compatibility
     tls_ctx = ssl.create_default_context(cafile=certifi.where())
@@ -56,5 +58,7 @@ async def init_db() -> None:
             InventoryLog,
             SchoolSettings,
             Exam,
+            Grade,
+            TeacherLeave,
         ],
     )

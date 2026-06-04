@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Classic Academic Report Card</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;1,400&family=Roboto:wght@400;500&display=swap');
+  body { font-family: 'Roboto', sans-serif; background-color: #555; margin: 0; padding: 40px; color: #000; }
+  .report-card { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border: 10px double #2c3e50; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+  .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #2c3e50; padding-bottom: 20px; }
+  .header h1 { font-family: 'Merriweather', serif; font-size: 28px; color: #2c3e50; margin: 0 0 10px; text-transform: uppercase; letter-spacing: 2px; }
+  .header p { margin: 0; font-size: 14px; color: #34495e; font-style: italic; }
+  .title { text-align: center; font-family: 'Merriweather', serif; font-size: 20px; margin: 20px 0; font-weight: bold; }
+  .student-details { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; border: 1px solid #bdc3c7; padding: 15px; background-color: #fdfdfd; }
+  .detail-row { display: flex; font-size: 15px; }
+  .detail-label { font-weight: bold; width: 120px; color: #2c3e50; }
+  .detail-value { border-bottom: 1px dotted #7f8c8d; flex-grow: 1; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 30px; border: 2px solid #2c3e50; }
+  th, td { border: 1px solid #2c3e50; padding: 10px; text-align: center; }
+  th { background-color: #ecf0f1; font-family: 'Merriweather', serif; font-size: 14px; color: #2c3e50; }
+  td { font-size: 14px; }
+  .subject-name { text-align: left; font-weight: bold; }
+  .total-row td { font-weight: bold; background-color: #ecf0f1; }
+  .remarks { border: 1px solid #2c3e50; padding: 15px; min-height: 80px; margin-bottom: 40px; }
+  .remarks-title { font-family: 'Merriweather', serif; font-weight: bold; margin-bottom: 10px; text-decoration: underline; }
+  .signatures { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; text-align: center; margin-top: 50px; }
+  .sig-box { padding-top: 40px; border-top: 1px solid #000; }
+</style>
+</head>
+<body>
+  <div class="report-card">
+    <div class="header">
+      <h1>Global Excellence Academy</h1>
+      <p>Building character and academic excellence since 1995</p>
+    </div>
+    
+    <div class="title">OFFICIAL ACADEMIC TRANSCRIPT</div>
+    
+    <div class="student-details">
+      <div class="detail-row"><span class="detail-label">Student Name:</span><span class="detail-value">Rohan Reddy</span></div>
+      <div class="detail-row"><span class="detail-label">Admission No:</span><span class="detail-value">#10</span></div>
+      <div class="detail-row"><span class="detail-label">Class & Sec:</span><span class="detail-value">10 - A</span></div>
+      <div class="detail-row"><span class="detail-label">Term:</span><span class="detail-value">FA1 (2024-25)</span></div>
+    </div>
+    
+    <table>
+      <thead>
+        <tr>
+          <th rowspan="2">Subjects</th>
+          <th colspan="2">Marks Obtained</th>
+          <th rowspan="2">Total (50)</th>
+          <th rowspan="2">Grade</th>
+        </tr>
+        <tr>
+          <th>Internal</th>
+          <th>External</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="subject-name">English Language</td>
+          <td>10</td>
+          <td>35</td>
+          <td>45</td>
+          <td>A</td>
+        </tr>
+        <tr>
+          <td class="subject-name">Mathematics</td>
+          <td>9</td>
+          <td>38</td>
+          <td>47</td>
+          <td>A+</td>
+        </tr>
+        <tr>
+          <td class="subject-name">General Science</td>
+          <td>8</td>
+          <td>30</td>
+          <td>38</td>
+          <td>B+</td>
+        </tr>
+        <tr class="total-row">
+          <td colspan="3" style="text-align: right; padding-right: 15px;">Grand Total</td>
+          <td>130 / 150</td>
+          <td>86.6%</td>
+        </tr>
+      </tbody>
+    </table>
+    
+    <div class="remarks">
+      <div class="remarks-title">Principal's / Teacher's Remarks:</div>
+      <div>Rohan is a diligent student who shows great aptitude in Mathematics. Keep up the excellent work!</div>
+    </div>
+    
+    <div class="signatures">
+      <div class="sig-box">Class Teacher</div>
+      <div class="sig-box">Principal</div>
+      <div class="sig-box">Parent / Guardian</div>
+    </div>
+  </div>
+</body>
+</html>

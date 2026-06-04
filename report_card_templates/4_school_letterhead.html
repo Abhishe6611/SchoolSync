@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>School Letterhead Report Card</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Times+New+Roman&family=Arial:wght@400;600;700&display=swap');
+  
+  body { 
+    font-family: 'Arial', sans-serif; 
+    background-color: #e2e8f0; 
+    margin: 0; 
+    padding: 40px; 
+    color: #1a202c; 
+  }
+  
+  .page-container {
+    max-width: 850px; 
+    margin: 0 auto; 
+    background: white; 
+    padding: 60px; 
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  }
+
+  /* --- LETTERHEAD --- */
+  .letterhead {
+    text-align: center;
+    border-bottom: 4px double #2d3748;
+    padding-bottom: 20px;
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 30px;
+  }
+  .logo-placeholder {
+    width: 100px;
+    height: 100px;
+    background-color: #edf2f7;
+    border: 2px dashed #cbd5e0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #a0aec0;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+  .school-details h1 {
+    font-family: 'Times New Roman', serif;
+    font-size: 36px;
+    color: #1a202c;
+    margin: 0 0 5px 0;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+  }
+  .school-details p {
+    margin: 3px 0;
+    font-size: 14px;
+    color: #4a5568;
+  }
+
+  /* --- EXAM DETAILS --- */
+  .exam-title {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+  .exam-title h2 {
+    font-family: 'Times New Roman', serif;
+    font-size: 24px;
+    margin: 0;
+    text-decoration: underline;
+    text-underline-offset: 6px;
+  }
+  .exam-title p {
+    margin: 5px 0 0 0;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  /* --- STUDENT DETAILS --- */
+  .student-details {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 40px;
+  }
+  .details-column {
+    width: 45%;
+  }
+  .detail-row {
+    display: flex;
+    margin-bottom: 12px;
+    font-size: 15px;
+  }
+  .detail-label {
+    font-weight: bold;
+    width: 130px;
+    color: #2d3748;
+  }
+  .detail-value {
+    border-bottom: 1px solid #cbd5e0;
+    flex-grow: 1;
+    color: #1a202c;
+    padding-bottom: 2px;
+  }
+
+  /* --- GRADES TABLE --- */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+  }
+  th, td {
+    border: 1px solid #718096;
+    padding: 12px;
+    text-align: center;
+  }
+  th {
+    background-color: #f7fafc;
+    font-weight: bold;
+    font-size: 14px;
+    color: #2d3748;
+    text-transform: uppercase;
+  }
+  .subject-col {
+    text-align: left;
+    font-weight: 600;
+  }
+  .total-row td {
+    font-weight: bold;
+    background-color: #f7fafc;
+  }
+
+  /* --- OVERALL SUMMARY --- */
+  .summary-box {
+    display: flex;
+    justify-content: space-between;
+    border: 2px solid #2d3748;
+    padding: 15px 30px;
+    margin-bottom: 40px;
+    background-color: #f7fafc;
+  }
+  .summary-item {
+    font-size: 16px;
+  }
+  .summary-item span {
+    font-weight: bold;
+    font-size: 18px;
+  }
+
+  /* --- REMARKS --- */
+  .remarks {
+    margin-bottom: 60px;
+  }
+  .remarks-label {
+    font-weight: bold;
+    margin-bottom: 8px;
+    font-size: 15px;
+  }
+  .remarks-line {
+    border-bottom: 1px solid #a0aec0;
+    height: 30px;
+  }
+
+  /* --- SIGNATURES --- */
+  .signatures {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 80px;
+  }
+  .sig-block {
+    text-align: center;
+    width: 200px;
+  }
+  .sig-line {
+    border-bottom: 1px solid #2d3748;
+    margin-bottom: 10px;
+  }
+  .sig-label {
+    font-size: 14px;
+    font-weight: bold;
+    color: #4a5568;
+  }
+</style>
+</head>
+<body>
+  <div class="page-container">
+    
+    <!-- 1. School Letterhead -->
+    <div class="letterhead">
+      <div class="logo-placeholder">[Logo Here]</div>
+      <div class="school-details">
+        <h1>Global Excellence Academy</h1>
+        <p>123 Education Boulevard, Knowledge City, State - 12345</p>
+        <p>Affiliated to Central Board of Secondary Education (CBSE)</p>
+        <p>Email: contact@geacademy.edu | Phone: +1-234-567-8900</p>
+      </div>
+    </div>
+
+    <!-- 2. Exam Details -->
+    <div class="exam-title">
+      <h2>PROGRESS REPORT</h2>
+      <p>Term 1 (FA1) Examination - Academic Year 2024-25</p>
+    </div>
+
+    <!-- 3. Student Details -->
+    <div class="student-details">
+      <div class="details-column">
+        <div class="detail-row">
+          <div class="detail-label">Student Name:</div>
+          <div class="detail-value">Rohan Reddy</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Admission No:</div>
+          <div class="detail-value">#10</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Date of Birth:</div>
+          <div class="detail-value">15-Aug-2009</div>
+        </div>
+      </div>
+      <div class="details-column">
+        <div class="detail-row">
+          <div class="detail-label">Class & Sec:</div>
+          <div class="detail-value">10 - A</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Roll Number:</div>
+          <div class="detail-value">24</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Attendance:</div>
+          <div class="detail-value">92%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Grades Table -->
+    <table>
+      <thead>
+        <tr>
+          <th rowspan="2" class="subject-col">Subjects</th>
+          <th colspan="2">Marks Obtained</th>
+          <th rowspan="2">Subject Total<br><small>(Max 50)</small></th>
+          <th rowspan="2">Grade</th>
+        </tr>
+        <tr>
+          <th>Internal</th>
+          <th>External</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="subject-col">English Language</td>
+          <td>10</td>
+          <td>35</td>
+          <td>45</td>
+          <td>A</td>
+        </tr>
+        <tr>
+          <td class="subject-col">Mathematics</td>
+          <td>9</td>
+          <td>38</td>
+          <td>47</td>
+          <td>A+</td>
+        </tr>
+        <tr>
+          <td class="subject-col">General Science</td>
+          <td>8</td>
+          <td>30</td>
+          <td>38</td>
+          <td>B+</td>
+        </tr>
+        <tr class="total-row">
+          <td colspan="3" style="text-align: right; padding-right: 20px;">Grand Total</td>
+          <td>130 / 150</td>
+          <td>86.6%</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- 5. Overall Summary Box -->
+    <div class="summary-box">
+      <div class="summary-item">Total Marks: <span>130 / 150</span></div>
+      <div class="summary-item">Overall Percentage: <span>86.6%</span></div>
+      <div class="summary-item">Overall Grade: <span>A</span></div>
+    </div>
+
+    <!-- 6. Remarks -->
+    <div class="remarks">
+      <div class="remarks-label">Class Teacher's Remarks:</div>
+      <div class="remarks-line" style="margin-top: 15px; font-family: cursive; font-size: 16px; padding-left: 10px;">
+        Rohan is a diligent student who shows great aptitude in Mathematics. Keep up the excellent work!
+      </div>
+      <div class="remarks-line"></div>
+    </div>
+
+    <!-- 7. Signatures -->
+    <div class="signatures">
+      <div class="sig-block">
+        <div class="sig-line"></div>
+        <div class="sig-label">Class Teacher</div>
+      </div>
+      <div class="sig-block">
+        <div class="sig-line"></div>
+        <div class="sig-label">Parent / Guardian</div>
+      </div>
+      <div class="sig-block">
+        <div class="sig-line"></div>
+        <div class="sig-label">Principal</div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

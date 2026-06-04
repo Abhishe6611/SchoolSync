@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vibrant & Creative Report Card</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap');
+  body { font-family: 'Outfit', sans-serif; background-color: #f0fdf4; margin: 0; padding: 40px; color: #1f2937; }
+  .report-card { max-width: 800px; margin: 0 auto; background: white; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 40px rgba(16, 185, 129, 0.1); border: 2px solid #ecfdf5; }
+  .header { background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 40px; color: white; position: relative; }
+  .header::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 20px; background: white; border-radius: 20px 20px 0 0; }
+  .school-name { font-size: 28px; font-weight: 800; margin: 0; letter-spacing: 0.5px; }
+  .tagline { margin: 5px 0 0; opacity: 0.9; font-size: 15px; }
+  
+  .student-banner { display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; background: #ecfdf5; margin: 0 20px; border-radius: 16px; transform: translateY(-10px); }
+  .student-name { font-size: 24px; font-weight: 800; color: #065f46; margin: 0; }
+  .student-meta { font-size: 14px; color: #047857; font-weight: 600; }
+  .grade-badge { background: #10b981; color: white; padding: 8px 16px; border-radius: 99px; font-weight: 800; font-size: 18px; }
+  
+  .content { padding: 20px 40px 40px; }
+  .section-title { font-size: 18px; font-weight: 800; color: #374151; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+  .section-title::before { content: ''; display: block; width: 12px; height: 12px; border-radius: 50%; background: #10b981; }
+  
+  table { width: 100%; border-collapse: separate; border-spacing: 0 8px; margin-bottom: 30px; }
+  th { text-align: left; padding: 0 15px 10px; color: #6b7280; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #f3f4f6; }
+  td { padding: 15px; background: #f9fafb; font-weight: 600; }
+  td:first-child { border-radius: 12px 0 0 12px; }
+  td:last-child { border-radius: 0 12px 12px 0; }
+  .subject-name { color: #111827; font-weight: 800; }
+  .grade-a { color: #10b981; } .grade-b { color: #3b82f6; } .grade-c { color: #f59e0b; }
+  
+  .summary-cards { display: flex; gap: 20px; margin-bottom: 40px; }
+  .card { flex: 1; background: #f0fdf4; border: 1px solid #d1fae5; padding: 20px; border-radius: 16px; text-align: center; }
+  .card-label { font-size: 12px; color: #047857; font-weight: 800; text-transform: uppercase; margin-bottom: 5px; }
+  .card-value { font-size: 32px; font-weight: 800; color: #065f46; }
+  
+  .remarks { background: #fef3c7; border: 1px solid #fde68a; padding: 20px; border-radius: 16px; position: relative; }
+  .remarks::before { content: '"'; position: absolute; top: -10px; left: 20px; font-size: 60px; color: #fbbf24; font-family: serif; opacity: 0.5; line-height: 1; }
+  .remarks p { margin: 0; color: #92400e; font-weight: 600; font-size: 15px; position: relative; z-index: 1; }
+</style>
+</head>
+<body>
+  <div class="report-card">
+    <div class="header">
+      <h1 class="school-name">Global Excellence Academy</h1>
+      <p class="tagline">Empowering Minds, Shaping Futures</p>
+    </div>
+    
+    <div class="student-banner">
+      <div>
+        <h2 class="student-name">Rohan Reddy</h2>
+        <div class="student-meta">Class 10 • ID: #10</div>
+      </div>
+      <div class="grade-badge">Term 1 (FA1)</div>
+    </div>
+    
+    <div class="content">
+      <div class="section-title">Academic Performance</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Subject</th>
+            <th>Internal</th>
+            <th>External</th>
+            <th>Total (50)</th>
+            <th>Grade</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="subject-name">English</td>
+            <td>10</td>
+            <td>35</td>
+            <td>45</td>
+            <td class="grade-a">A</td>
+          </tr>
+          <tr>
+            <td class="subject-name">Mathematics</td>
+            <td>9</td>
+            <td>38</td>
+            <td>47</td>
+            <td class="grade-a">A+</td>
+          </tr>
+          <tr>
+            <td class="subject-name">Science</td>
+            <td>8</td>
+            <td>30</td>
+            <td>38</td>
+            <td class="grade-b">B+</td>
+          </tr>
+        </tbody>
+      </table>
+      
+      <div class="summary-cards">
+        <div class="card">
+          <div class="card-label">Total Marks</div>
+          <div class="card-value">130<span style="font-size:16px; color:#10b981;">/150</span></div>
+        </div>
+        <div class="card">
+          <div class="card-label">Overall Percentage</div>
+          <div class="card-value">86.6%</div>
+        </div>
+      </div>
+      
+      <div class="remarks">
+        <p>Rohan is a diligent student who shows great aptitude in Mathematics. Keep up the excellent work!</p>
+        <div style="margin-top: 15px; font-size: 13px; color: #b45309; font-weight: 800; text-transform: uppercase;">— Class Teacher</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

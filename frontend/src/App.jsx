@@ -27,6 +27,8 @@ import Roles from "./pages/Roles.jsx";
 import Payroll from "./pages/Payroll.jsx";
 import Inventory from "./pages/Inventory.jsx";
 import AdminControls from "./pages/AdminControls.jsx";
+import TeacherLeave from "./pages/TeacherLeave.jsx";
+import LeaveApproval from "./pages/LeaveApproval.jsx";
 import { useAuth } from "./context/AuthContext.jsx";
 
 function PageTransition({ children }) {
@@ -143,6 +145,7 @@ export default function App() {
                 <Route path="/teacher/attendance" element={<TeacherLayout><Attendance /></TeacherLayout>} />
                 <Route path="/teacher/timetable" element={<TeacherLayout><Timetable /></TeacherLayout>} />
                 <Route path="/teacher/assignments" element={<TeacherLayout><div className="card text-center py-20 text-[#868e96]">Assignments Module Coming Soon</div></TeacherLayout>} />
+                <Route path="/teacher/leave" element={<TeacherLayout><TeacherLeave /></TeacherLayout>} />
                 <Route path="/teacher/notes" element={<TeacherLayout><div className="card text-center py-20 text-[#868e96]">Notes Module Coming Soon</div></TeacherLayout>} />
                 <Route path="*" element={<Navigate to="/teacher/attendance" replace />} />
               </>
@@ -162,6 +165,7 @@ export default function App() {
                 <Route path="/transport" element={<Layout><Transport /></Layout>} />
                 <Route path="/payroll" element={<Layout><Payroll /></Layout>} />
                 <Route path="/inventory" element={<Layout><Inventory /></Layout>} />
+                <Route path="/leave-approval" element={<Layout><LeaveApproval /></Layout>} />
                 <Route path="/roles" element={<Layout><Roles /></Layout>} />
                 <Route path="/admin-controls" element={<Layout><AdminControls /></Layout>} />
                 <Route path="/audit" element={<Layout><AuditLogs /></Layout>} />

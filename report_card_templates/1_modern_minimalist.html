@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modern Minimalist Report Card</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+  body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; margin: 0; padding: 40px; color: #212529; }
+  .report-card { max-width: 800px; margin: 0 auto; background: white; padding: 50px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; border-bottom: 1px solid #e9ecef; padding-bottom: 20px; }
+  .school-info h1 { margin: 0; font-size: 24px; color: #1c7ed6; font-weight: 700; letter-spacing: -0.5px; }
+  .school-info p { margin: 5px 0 0; color: #868e96; font-size: 14px; }
+  .student-info { text-align: right; }
+  .student-info h2 { margin: 0; font-size: 20px; font-weight: 600; }
+  .student-info p { margin: 5px 0 0; color: #495057; font-size: 14px; }
+  .term-title { text-align: center; font-size: 18px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #adb5bd; margin-bottom: 30px; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 40px; }
+  th { background-color: #f8f9fa; color: #495057; font-weight: 600; text-transform: uppercase; font-size: 12px; padding: 15px; text-align: left; border-bottom: 2px solid #dee2e6; }
+  td { padding: 15px; border-bottom: 1px solid #f1f3f5; font-size: 14px; color: #495057; }
+  .subject-name { font-weight: 600; color: #212529; }
+  .total-row td { font-weight: 700; background-color: #f8f9fa; color: #212529; border-top: 2px solid #dee2e6; border-bottom: none; }
+  .remarks-section { background-color: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #1c7ed6; }
+  .remarks-section h3 { margin: 0 0 10px; font-size: 14px; text-transform: uppercase; color: #495057; }
+  .remarks-section p { margin: 0; font-size: 14px; color: #495057; font-style: italic; }
+  .signatures { display: flex; justify-content: space-between; margin-top: 60px; }
+  .sig-line { border-top: 1px solid #ced4da; width: 200px; text-align: center; padding-top: 10px; font-size: 14px; color: #868e96; }
+</style>
+</head>
+<body>
+  <div class="report-card">
+    <div class="header">
+      <div class="school-info">
+        <h1>Global Excellence Academy</h1>
+        <p>123 Education Boulevard, Knowledge City</p>
+      </div>
+      <div class="student-info">
+        <h2>Rohan Reddy</h2>
+        <p>ID: #10 &nbsp;|&nbsp; Class: 10</p>
+      </div>
+    </div>
+    
+    <div class="term-title">Term 1 (FA1) Academic Report</div>
+    
+    <table>
+      <thead>
+        <tr>
+          <th>Subject</th>
+          <th>Internal</th>
+          <th>External</th>
+          <th>Total (Max: 50)</th>
+          <th>Grade</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="subject-name">English</td>
+          <td>10</td>
+          <td>35</td>
+          <td>45</td>
+          <td>A</td>
+        </tr>
+        <tr>
+          <td class="subject-name">Mathematics</td>
+          <td>9</td>
+          <td>38</td>
+          <td>47</td>
+          <td>A+</td>
+        </tr>
+        <tr>
+          <td class="subject-name">Science</td>
+          <td>8</td>
+          <td>30</td>
+          <td>38</td>
+          <td>B+</td>
+        </tr>
+        <tr class="total-row">
+          <td colspan="3" style="text-align: right;">Overall Term Total:</td>
+          <td>130 / 150</td>
+          <td>86.6%</td>
+        </tr>
+      </tbody>
+    </table>
+    
+    <div class="remarks-section">
+      <h3>Teacher's Remarks</h3>
+      <p>"Rohan is a diligent student who shows great aptitude in Mathematics. Keep up the excellent work!"</p>
+    </div>
+    
+    <div class="signatures">
+      <div class="sig-line">Class Teacher</div>
+      <div class="sig-line">Principal</div>
+      <div class="sig-line">Parent / Guardian</div>
+    </div>
+  </div>
+</body>
+</html>

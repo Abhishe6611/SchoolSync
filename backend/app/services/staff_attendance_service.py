@@ -9,7 +9,7 @@ def calculate_daily_wage_pay(daily_rate: float, status: str, overtime_hours: flo
     gross_wage = 0.0
     status_lower = status.lower()
     
-    if status_lower == 'present':
+    if status_lower in ('present', 'leave'):
         gross_wage = daily_rate
     elif status_lower == 'half-day':
         gross_wage = daily_rate / 2
@@ -110,8 +110,8 @@ async def get_teacher_attendance_percentage(staff_id: int) -> dict:
         StaffAttendance.date <= today
     ).to_list()
     
-    present = sum(1 for r in records if r.status.lower() == "present") + sum(0.5 for r in records if r.status.lower() == "half-day")
-    total = sum(1 for r in records if r.status.lower() in ("present", "absent", "half-day"))
+    present = sum(1 for r in records if r.status.lower() in ("present", "leave")) + sum(0.5 for r in records if r.status.lower() == "half-day")
+    total = sum(1 for r in records if r.status.lower() in ("present", "absent", "half-day", "leave"))
     
     pct = round((present / total) * 100) if total > 0 else 100
     

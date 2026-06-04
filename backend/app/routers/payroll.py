@@ -67,7 +67,7 @@ async def generate_payroll(month: int, year: int):
         unpaid_leave_days = sum(1 for a in attendances if a.status.lower() == "absent")
         unpaid_leave_days += sum(0.5 for a in attendances if a.status.lower() == "half-day")
         
-        days_present = sum(1 for a in attendances if a.status.lower() == "present")
+        days_present = sum(1 for a in attendances if a.status.lower() in ("present", "leave"))
         days_present += sum(0.5 for a in attendances if a.status.lower() == "half-day")
         
         # Calculate salary
@@ -190,7 +190,7 @@ async def get_daily_wage_report(start_date: str, end_date: str):
             
         row = report_map[staff.id]
         st = att.status.lower()
-        if st == 'present':
+        if st in ('present', 'leave'):
             row["total_paid_days"] += 1
         elif st == 'half-day':
             row["total_paid_days"] += 0.5
