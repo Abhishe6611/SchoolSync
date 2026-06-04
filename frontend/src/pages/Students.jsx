@@ -76,7 +76,7 @@ export default function Students() {
   const [filterClass, setFilterClass] = useState("");
   const [filterYear, setFilterYear] = useState("");
   const [page, setPage] = useState(1);
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState({ key: 'id', direction: 'asc' });
   const pageSize = 15;
 
   const [activeTab, setActiveTab] = useState("directory");

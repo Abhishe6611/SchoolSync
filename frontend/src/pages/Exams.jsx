@@ -39,7 +39,7 @@ export default function Exams() {
   const [successMsg, setSuccessMsg] = useState("");
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState({ key: 'id', direction: 'asc' });
   const [activeType, setActiveType] = useState("FA1");
   const [expandedClasses, setExpandedClasses] = useState({});
   const limit = 10;

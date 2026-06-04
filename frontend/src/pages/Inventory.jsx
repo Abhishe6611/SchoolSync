@@ -23,8 +23,8 @@ export default function Inventory() {
   const [itemLogs, setItemLogs] = useState([]);
   const [page, setPage] = useState(1);
   const [logPage, setLogPage] = useState(1);
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
-  const [logSortConfig, setLogSortConfig] = useState({ key: null, direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState({ key: 'id', direction: 'asc' });
+  const [logSortConfig, setLogSortConfig] = useState({ key: 'id', direction: 'asc' });
   const pageSize = 10;
 
   const fetchItems = async () => { try { const r = await api.get("/inventory"); setItems(r.data); } catch {} };

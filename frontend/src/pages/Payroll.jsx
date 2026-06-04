@@ -44,8 +44,8 @@ export default function Payroll() {
   // Pagination
   const [page, setPage] = useState(1);
   const [structPage, setStructPage] = useState(1);
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
-  const [structSortConfig, setStructSortConfig] = useState({ key: null, direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState({ key: 'id', direction: 'asc' });
+  const [structSortConfig, setStructSortConfig] = useState({ key: 'id', direction: 'asc' });
   const pageSize = 10;
 
   // ── Data Fetching ──

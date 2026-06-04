@@ -14,7 +14,7 @@ export default function Classes() {
   const [editingId, setEditingId] = useState(null);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState({ key: 'id', direction: 'asc' });
   const pageSize = 10;
 
   const fetchData = async () => {

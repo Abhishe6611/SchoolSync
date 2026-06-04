@@ -43,8 +43,8 @@ export default function Fees() {
   const [filterStatus, setFilterStatus] = useState("");
   const [page, setPage] = useState(1);
   const [histPage, setHistPage] = useState(1);
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
-  const [histSortConfig, setHistSortConfig] = useState({ key: null, direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState({ key: 'id', direction: 'asc' });
+  const [histSortConfig, setHistSortConfig] = useState({ key: 'id', direction: 'asc' });
   const pageSize = 10;
 
   // ── Data Fetching ─────────────────────────────────────
