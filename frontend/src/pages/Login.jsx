@@ -26,7 +26,11 @@ export default function Login() {
       // Let the app layout handle the routing based on role once reloaded
       window.location.href = "/";
     } catch (err) {
-      setError("Invalid credentials. Please try again.");
+      if (!err.response) {
+        setError("Unable to connect to the server. Please try again later.");
+      } else {
+        setError("Invalid credentials. Please try again.");
+      }
     } finally {
       setLoading(false);
     }

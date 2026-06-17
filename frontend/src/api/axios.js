@@ -26,6 +26,14 @@ api.interceptors.response.use(
       }
     } else {
       const method = error.config?.method?.toLowerCase();
+      const url = error.config?.url || '';
+      
+      // Do not queue authentication requests offline
+      if (url.includes('/auth/login')) {
+        window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: "Cannot login while offline or server is unreachable.", type: 'error' } }));
+        return Promise.reject(error);
+      }
+
       // If it's a modifying request and network is down, cache it
       if (['post', 'put', 'patch', 'delete'].includes(method)) {
         // We cannot serialize FormData into IndexedDB natively via simple add without DataCloneError
