@@ -6,9 +6,7 @@ Every student and staff member has a unique name.
 import pymongo
 import random
 from datetime import datetime, date, timedelta
-from passlib.context import CryptContext
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 import os
 from dotenv import load_dotenv
