@@ -24,6 +24,11 @@ export default function AdminControls() {
   const [promoting, setPromoting] = useState(false);
   const [promoResult, setPromoResult] = useState(null);
 
+  // License state
+  const [licenseKeyInput, setLicenseKeyInput] = useState("");
+  const [licenseUpdating, setLicenseUpdating] = useState(false);
+  const [licenseStatusMsg, setLicenseStatusMsg] = useState(null);
+
   const handleUnlock = async (e) => {
     e.preventDefault();
     setPinError("");
@@ -138,7 +143,7 @@ export default function AdminControls() {
       {/* Tabs */}
       <div className="animate-slide-up" style={{ animationDelay: "60ms", opacity: 0, animationFillMode: "forwards" }}>
         <div className="flex gap-1 p-1 rounded-xl bg-slate-100 w-fit">
-          {[{ id: "branding", label: "School Branding" }, { id: "promotion", label: "Student Promotion" }].map(t => (
+          {[{ id: "branding", label: "School Branding" }, { id: "promotion", label: "Student Promotion" }, { id: "licensing", label: "License Management" }].map(t => (
             <button key={t.id} onClick={() => setTab(t.id)} className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 ${tab === t.id ? "bg-white text-ink shadow-sm" : "text-muted hover:text-ink"}`}>{t.label}</button>
           ))}
         </div>
@@ -281,6 +286,57 @@ export default function AdminControls() {
               </div>
             </div>
           )}
+        </div>
+      )}
+      {/* ══ TAB 3: LICENSING ══ */}
+      {tab === "licensing" && (
+        <div className="animate-slide-up" style={{ animationDelay: "120ms", opacity: 0, animationFillMode: "forwards" }}>
+          <div className="max-w-2xl mx-auto">
+            <div className="card">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-ink">System License</h3>
+                  <p className="text-xs text-muted">Update your enterprise license key to restore or extend system access.</p>
+                </div>
+              </div>
+
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                setLicenseUpdating(true);
+                try {
+                  const res = await api.post("/admin/update-license", { license_key: licenseKeyInput });
+                  setLicenseStatusMsg({ type: "success", text: res.data.message });
+                  setLicenseKeyInput("");
+                } catch (err) {
+                  setLicenseStatusMsg({ type: "error", text: err.response?.data?.detail || "Failed to update license" });
+                }
+                setLicenseUpdating(false);
+              }}>
+                <label className="block text-xs font-semibold text-[#495057] mb-2">License Key</label>
+                <textarea 
+                  className="input-field font-mono text-[10px] break-all min-h-[120px] mb-4" 
+                  placeholder="Paste your JWT license key here..."
+                  value={licenseKeyInput}
+                  onChange={e => setLicenseKeyInput(e.target.value)}
+                  required
+                />
+                
+                <div className="flex items-center gap-3">
+                  <button type="submit" disabled={licenseUpdating || !licenseKeyInput.trim()} className="btn-primary flex items-center gap-2">
+                    {licenseUpdating ? "Updating..." : "Activate License"}
+                  </button>
+                  {licenseStatusMsg && (
+                    <span className={`text-sm font-semibold animate-fade-in ${licenseStatusMsg.type === "success" ? "text-emerald-600" : "text-red-600"}`}>
+                      {licenseStatusMsg.text}
+                    </span>
+                  )}
+                </div>
+              </form>
+            </div>
+          </div>
         </div>
       )}
     </div>
