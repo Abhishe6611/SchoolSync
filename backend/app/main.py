@@ -28,6 +28,9 @@ async def lifespan(app: FastAPI):
 def create_app() -> FastAPI:
     app = FastAPI(title="School Management System", lifespan=lifespan)
 
+    from app.core.license_middleware import LicenseMiddleware
+    app.add_middleware(LicenseMiddleware)
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[origin.strip() for origin in settings.CORS_ORIGINS.split(",") if origin.strip()],
@@ -35,9 +38,6 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    
-    from app.core.license_middleware import LicenseMiddleware
-    app.add_middleware(LicenseMiddleware)
 
     app.include_router(auth.router, prefix="/auth", tags=["auth"])
     

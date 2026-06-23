@@ -6,7 +6,7 @@ export default function GlobalToast() {
   useEffect(() => {
     const handleShowToast = (event) => {
       const { message, type } = event.detail;
-      const id = Date.now();
+      const id = Date.now().toString() + Math.random().toString();
       setToasts((prev) => [...prev, { id, message, type }]);
 
       setTimeout(() => {
