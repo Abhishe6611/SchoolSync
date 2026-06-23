@@ -62,8 +62,13 @@ export const exportToPDF = (data, columns, filename, title = "Exported Data") =>
   const tableColumn = exportColumns.map((col) => col.label);
   const tableRows = data.map((row) => 
     exportColumns.map((col) => {
-      // Handle nested or complex data if necessary, here we just convert to string
-      return row[col.key] !== null && row[col.key] !== undefined ? String(row[col.key]) : "";
+      // If render exists, we might get JSX back. We should try to extract text or fallback.
+      if (col.key === "name") return `${row.first_name || ""} ${row.last_name || ""}`.trim();
+      if (col.key === "class_id" && row.class_id) return String(row.class_id);
+      if (col.key === "date_of_birth" && row.dob) return String(row.dob);
+      
+      let val = row[col.key];
+      return val !== null && val !== undefined ? String(val) : "";
     })
   );
 

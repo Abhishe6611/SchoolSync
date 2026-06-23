@@ -15,7 +15,10 @@ export default function ImportExportToolbar({
   const [isImporting, setIsImporting] = useState(false);
 
   const handleExportExcel = async () => {
-    await exportToExcel(data, columns, filename);
+    // Generate raw data columns for Excel so Export matches Import perfectly
+    const exportKeys = ["id", ...(templateFields || [])];
+    const excelColumns = exportKeys.map(key => ({ key, label: key }));
+    await exportToExcel(data, excelColumns, filename);
   };
 
   const handleExportPDF = () => {
