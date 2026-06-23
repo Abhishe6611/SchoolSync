@@ -61,6 +61,21 @@ async def update_school_settings(body: SchoolSettingsUpdate, _=Depends(require_r
     await s.save()
     return s
 
+class LicenseUpdate(BaseModel):
+    license_key: str
+
+@router.post("/update-license")
+async def update_license(body: LicenseUpdate, _=Depends(require_roles(["superadmin"]))):
+    s = await get_settings()
+    s.license_key = body.license_key
+    await s.save()
+    
+    # Instantly clear the cache so the middleware recognizes the new license
+    from app.core.license_middleware import clear_license_cache
+    clear_license_cache()
+    
+    return {"message": "License updated successfully."}
+
 @router.post("/school-logo")
 async def upload_school_logo(file: UploadFile = File(...), _=Depends(require_roles(["superadmin"]))):
     uploads_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "uploads", "branding")

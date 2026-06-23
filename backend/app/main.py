@@ -35,6 +35,9 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    
+    from app.core.license_middleware import LicenseMiddleware
+    app.add_middleware(LicenseMiddleware)
 
     app.include_router(auth.router, prefix="/auth", tags=["auth"])
     

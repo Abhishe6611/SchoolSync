@@ -109,10 +109,22 @@ async def upload_staff_photo(
     member = await get_staff(staff_id)
     if not member:
         raise HTTPException(status_code=404, detail="Staff not found")
+        
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+    
+    # Delete old photo if exists
+    if member.photo_url:
+        old_rel_path = member.photo_url.lstrip('/')
+        old_filepath = os.path.join(base_dir, old_rel_path)
+        if os.path.exists(old_filepath):
+            try:
+                os.remove(old_filepath)
+            except Exception:
+                pass
     
     ext = os.path.splitext(file.filename)[1] or ".jpg"
     filename = f"{staff_id}_{uuid.uuid4().hex[:8]}{ext}"
-    upload_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "uploads", "staff")
+    upload_dir = os.path.join(base_dir, "uploads", "staff")
     os.makedirs(upload_dir, exist_ok=True)
     filepath = os.path.join(upload_dir, filename)
     

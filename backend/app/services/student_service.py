@@ -46,4 +46,17 @@ async def update_student(student: Student, student_in: StudentUpdate) -> Student
     return student
 
 async def delete_student(student: Student) -> None:
+    import os
+    if student.photo_url:
+        # photo_url is typically like /uploads/students/filename.ext
+        # We need to compute the absolute path
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        # remove leading slash if present to avoid path joining issues
+        rel_path = student.photo_url.lstrip('/')
+        filepath = os.path.join(base_dir, rel_path)
+        if os.path.exists(filepath):
+            try:
+                os.remove(filepath)
+            except Exception:
+                pass
     await student.delete()

@@ -19,4 +19,14 @@ async def update_staff(staff: Staff, staff_in: StaffUpdate) -> Staff:
     return staff
 
 async def delete_staff(staff: Staff) -> None:
+    import os
+    if staff.photo_url:
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        rel_path = staff.photo_url.lstrip('/')
+        filepath = os.path.join(base_dir, rel_path)
+        if os.path.exists(filepath):
+            try:
+                os.remove(filepath)
+            except Exception:
+                pass
     await staff.delete()

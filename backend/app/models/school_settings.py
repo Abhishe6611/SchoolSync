@@ -13,6 +13,8 @@ class SchoolSettings(BaseDocument):
     hr_head: str = "Mrs. Sunita Rao"
     logo_url: Optional[str] = None
     admin_pin: str = "123456"  # Default PIN, changeable from UI
+    license_key: Optional[str] = None
+    license_status: str = "active"
 
     class Settings:
         name = "school_settings"

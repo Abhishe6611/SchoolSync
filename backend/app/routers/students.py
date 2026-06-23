@@ -150,10 +150,22 @@ async def upload_student_photo(
     student = await get_student(student_id)
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
+        
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+    
+    # Delete old photo if exists
+    if student.photo_url:
+        old_rel_path = student.photo_url.lstrip('/')
+        old_filepath = os.path.join(base_dir, old_rel_path)
+        if os.path.exists(old_filepath):
+            try:
+                os.remove(old_filepath)
+            except Exception:
+                pass
     
     ext = os.path.splitext(file.filename)[1] or ".jpg"
     filename = f"{student_id}_{uuid.uuid4().hex[:8]}{ext}"
-    upload_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "uploads", "students")
+    upload_dir = os.path.join(base_dir, "uploads", "students")
     os.makedirs(upload_dir, exist_ok=True)
     filepath = os.path.join(upload_dir, filename)
     
