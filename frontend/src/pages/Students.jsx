@@ -70,6 +70,7 @@ export default function Students() {
   const [students, setStudents] = useState([]);
   const [classes, setClasses] = useState([]);
   const [routes, setRoutes] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [form, setForm, clearForm] = useAutoSave("student_form_draft", emptyForm);
   const [editingId, setEditingId] = useState(null);
   const [search, setSearch] = useState("");
@@ -93,6 +94,7 @@ export default function Students() {
   const [showHallTicket, setShowHallTicket] = useState(null); // stores the student object
 
   const fetchData = async () => {
+    setIsLoading(true);
     try {
       const [studentsRes, classesRes, routesRes] = await Promise.all([
         api.get("/students"), 
@@ -104,6 +106,8 @@ export default function Students() {
       setRoutes(routesRes.data);
     } catch(err) {
       console.error(err);
+    } finally {
+      setIsLoading(false);
     }
   };
   const fetchPassedOut = async () => {
@@ -449,8 +453,16 @@ export default function Students() {
       {/* ═══════ TAB 1: DIRECTORY ═══════ */}
       {activeTab === "directory" && (
         <div className="space-y-4 animate-slide-up" style={{ animationDelay: "100ms", opacity: 0, animationFillMode: "forwards" }}>
-          {/* Stat cards row */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-24">
+              <div className="w-10 h-10 border-4 border-[#e9ecef] border-t-[#4263eb] rounded-full animate-spin"></div>
+              <p className="text-[#868e96] text-sm mt-4 font-medium animate-pulse">Loading student records...</p>
+            </div>
+          ) : (
+            <>
+              {/* Stat cards row */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {[
               { label: "Total Students", value: students.length },
               { label: "Male", value: students.filter(s => (s.gender || "").toLowerCase() === "male").length },
@@ -516,6 +528,8 @@ export default function Students() {
 
           <Table columns={columns} data={paged} onSort={handleSort} sortConfig={sortConfig} />
           <Pagination page={page} totalPages={totalPages} onPageChange={setPage} totalRecords={filtered.length} pageSize={pageSize} />
+            </>
+          )}
         </div>
       )}
 

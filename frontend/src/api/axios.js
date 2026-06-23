@@ -99,13 +99,12 @@ api.get = async (url, config) => {
       pendingRequests.set(cacheKey, fetchPromise);
     }
     
-    // Deep clone the cached response data to prevent accidental mutation by components
-    return Promise.resolve({ ...cachedRes, data: JSON.parse(JSON.stringify(cachedRes.data)) });
+    return Promise.resolve({ ...cachedRes, data: cachedRes.data });
   }
 
   if (pendingRequests.has(cacheKey)) {
     const res = await pendingRequests.get(cacheKey);
-    return { ...res, data: JSON.parse(JSON.stringify(res.data)) };
+    return { ...res, data: res.data };
   }
 
   const fetchPromise = originalGet.call(api, url, config).then(res => {
@@ -119,7 +118,7 @@ api.get = async (url, config) => {
 
   pendingRequests.set(cacheKey, fetchPromise);
   const res = await fetchPromise;
-  return { ...res, data: JSON.parse(JSON.stringify(res.data)) };
+  return { ...res, data: res.data };
 };
 
 const clearCache = () => cache.clear();
