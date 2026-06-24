@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from typing import Optional
 
 from app.core.dependencies import require_roles
+from app.core.security import get_password_hash, verify_password
 from app.models.school_settings import SchoolSettings
 from app.models.student import Student
 from app.models.class_model import ClassModel
@@ -25,8 +26,19 @@ class PinBody(BaseModel):
 @router.post("/verify-pin")
 async def verify_pin(body: PinBody, _=Depends(require_roles(["superadmin"]))):
     settings = await get_settings()
-    if body.pin != settings.admin_pin:
-        raise HTTPException(status_code=401, detail="Invalid PIN")
+    if not settings.admin_pin:
+        raise HTTPException(status_code=400, detail="PIN not set")
+        
+    if settings.admin_pin.startswith("$2"):
+        if not verify_password(body.pin, settings.admin_pin):
+            raise HTTPException(status_code=401, detail="Invalid PIN")
+    else:
+        # Fallback for plain text PINs (legacy), upgrade immediately
+        if body.pin != settings.admin_pin:
+            raise HTTPException(status_code=401, detail="Invalid PIN")
+        settings.admin_pin = get_password_hash(body.pin)
+        await settings.save()
+        
     return {"verified": True}
 
 # ── School Settings CRUD ──
@@ -56,7 +68,12 @@ class SchoolSettingsUpdate(BaseModel):
 @router.put("/school-settings")
 async def update_school_settings(body: SchoolSettingsUpdate, _=Depends(require_roles(["superadmin"]))):
     s = await get_settings()
-    for field, value in body.model_dump(exclude_none=True).items():
+    update_data = body.model_dump(exclude_none=True)
+    
+    if "admin_pin" in update_data:
+        update_data["admin_pin"] = get_password_hash(update_data["admin_pin"])
+
+    for field, value in update_data.items():
         setattr(s, field, value)
     await s.save()
     return s
@@ -78,9 +95,14 @@ async def update_license(body: LicenseUpdate, _=Depends(require_roles(["superadm
 
 @router.post("/school-logo")
 async def upload_school_logo(file: UploadFile = File(...), _=Depends(require_roles(["superadmin"]))):
+    if file.content_type not in ["image/jpeg", "image/png", "image/webp"]:
+        raise HTTPException(status_code=400, detail="Invalid file type. Only JPEG, PNG, and WEBP are allowed.")
+
     uploads_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "uploads", "branding")
     os.makedirs(uploads_dir, exist_ok=True)
-    ext = os.path.splitext(file.filename)[1] or ".png"
+    
+    ext = ".png" if file.content_type == "image/png" else (".webp" if file.content_type == "image/webp" else ".jpg")
+    
     filepath = os.path.join(uploads_dir, f"school_logo{ext}")
     with open(filepath, "wb") as f:
         f.write(await file.read())

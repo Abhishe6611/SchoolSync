@@ -37,6 +37,8 @@ async def register_admin(
     admin_in: AdminUserCreate,
     current_user: AdminUser = Depends(require_roles(["superadmin", "admin"])),
 ) -> AdminUserRead:
+    if admin_in.role == "superadmin" and current_user.role != "superadmin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only superadmins can create other superadmins")
     if await get_user_by_username(admin_in.username):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already exists")
     if await get_user_by_email(admin_in.email):
@@ -65,11 +67,18 @@ class RoleUpdateBody(BaseModel):
 async def update_user_role(
     user_id: int,
     body: RoleUpdateBody,
-    _=Depends(require_roles(["admin", "superadmin"])),
+    current_user: AdminUser = Depends(require_roles(["admin", "superadmin"])),
 ):
+    if body.role == "superadmin" and current_user.role != "superadmin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only superadmins can grant superadmin privileges")
+
     user = await AdminUser.get(user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+        
+    if user.role == "superadmin" and current_user.role != "superadmin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admins cannot modify a superadmin's role")
+
     if body.role not in ("admin", "superadmin", "teacher"):
         raise HTTPException(status_code=400, detail="Invalid role")
     user.role = body.role
@@ -80,11 +89,18 @@ async def update_user_role(
 @router.patch("/users/{user_id}/toggle-active", response_model=AdminUserRead)
 async def toggle_user_active(
     user_id: int,
-    _=Depends(require_roles(["admin", "superadmin"])),
+    current_user: AdminUser = Depends(require_roles(["admin", "superadmin"])),
 ):
     user = await AdminUser.get(user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+        
+    if user.role == "superadmin" and current_user.role != "superadmin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admins cannot deactivate a superadmin")
+        
+    if user.id == current_user.id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You cannot deactivate your own account")
+
     user.is_active = not user.is_active
     await user.save()
     return user
@@ -93,10 +109,17 @@ async def toggle_user_active(
 @router.delete("/users/{user_id}", status_code=204)
 async def delete_user(
     user_id: int,
-    _=Depends(require_roles(["admin", "superadmin"])),
+    current_user: AdminUser = Depends(require_roles(["admin", "superadmin"])),
 ):
     user = await AdminUser.get(user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+        
+    if user.role == "superadmin" and current_user.role != "superadmin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admins cannot delete a superadmin")
+        
+    if user.id == current_user.id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You cannot delete your own account")
+
     await user.delete()
     return None

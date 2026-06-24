@@ -105,6 +105,9 @@ async def upload_staff_photo(
     file: UploadFile = File(...),
     _=Depends(require_roles(["admin", "superadmin"])),
 ):
+    if file.content_type not in ["image/jpeg", "image/png", "image/webp"]:
+        raise HTTPException(status_code=400, detail="Invalid file type. Only JPEG, PNG, and WEBP are allowed.")
+
     import os, uuid
     member = await get_staff(staff_id)
     if not member:
@@ -122,7 +125,7 @@ async def upload_staff_photo(
             except Exception:
                 pass
     
-    ext = os.path.splitext(file.filename)[1] or ".jpg"
+    ext = ".png" if file.content_type == "image/png" else (".webp" if file.content_type == "image/webp" else ".jpg")
     filename = f"{staff_id}_{uuid.uuid4().hex[:8]}{ext}"
     upload_dir = os.path.join(base_dir, "uploads", "staff")
     os.makedirs(upload_dir, exist_ok=True)
