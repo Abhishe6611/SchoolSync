@@ -31,9 +31,17 @@ def create_app() -> FastAPI:
     from app.core.license_middleware import LicenseMiddleware
     app.add_middleware(LicenseMiddleware)
 
+    raw_origins = [origin.strip().rstrip('/') for origin in settings.CORS_ORIGINS.split(",") if origin.strip()]
+    clean_origins = []
+    for origin in raw_origins:
+        if not origin.startswith("http"):
+            clean_origins.append(f"https://{origin}")
+        else:
+            clean_origins.append(origin)
+
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[origin.strip() for origin in settings.CORS_ORIGINS.split(",") if origin.strip()],
+        allow_origins=clean_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
