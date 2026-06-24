@@ -72,6 +72,14 @@ def create_app() -> FastAPI:
 
 app = create_app()
 
+@app.get("/")
+async def root():
+    return {
+        "status": "online",
+        "message": "Welcome to the SchoolSync API! The server is running successfully.",
+        "docs_url": "/docs"
+    }
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     error_msg = str(exc)
